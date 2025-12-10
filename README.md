@@ -338,6 +338,11 @@ backToRGB := xyz.RGBA()           // XYZ -> RGB (via interface)
 - `MixInSpace(c1, c2 Color, weight float64, space GradientSpace) Color` - Mix colors in specified color space
 - `EaseLinear`, `EaseInQuad`, `EaseOutQuad`, `EaseInOutQuad`, `EaseInCubic`, `EaseOutCubic`, `EaseInOutCubic`, `EaseInSine`, `EaseOutSine`, `EaseInOutSine` - Easing functions for non-linear gradients
 
+### Standard Library Compatibility
+
+- `ToStdColor(c Color) image/color.Color` - Convert to standard library color.Color interface
+- `FromStdColor(c image/color.Color) Color` - Convert from standard library color.Color interface
+
 ### Utility Functions
 
 - `Lighten(c Color, amount float64) Color` - Lighten color (amount: [0, 1])
