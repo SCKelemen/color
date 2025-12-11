@@ -305,7 +305,7 @@ func generateXYZGamutComparison(spaces []struct {
 
 	// Find bounding box and crop
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
-	padding := 20 * scale
+	var padding int = 20 * scale
 	croppedWidth := (maxXImg - minXImg) + (padding * 2)
 	croppedHeight := (maxYImg - minYImg) + (padding * 2)
 
