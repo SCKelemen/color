@@ -336,7 +336,8 @@ backToRGB := xyz.RGBA()           // XYZ -> RGB (via interface)
 - `GradientWithEasing(start, end Color, steps int, space GradientSpace, easing EasingFunction) []Color` - Generate gradient with easing function
 - `GradientMultiStopWithEasing(stops []GradientStop, steps int, space GradientSpace, easing EasingFunction) []Color` - Multistop gradient with easing
 - `MixInSpace(c1, c2 Color, weight float64, space GradientSpace) Color` - Mix colors in specified color space
-- `EaseLinear`, `EaseInQuad`, `EaseOutQuad`, `EaseInOutQuad`, `EaseInCubic`, `EaseOutCubic`, `EaseInOutCubic`, `EaseInSine`, `EaseOutSine`, `EaseInOutSine` - Easing functions for non-linear gradients
+- `EaseLinear`, `EaseInQuad`, `EaseOutQuad`, `EaseInOutQuad`, `EaseInCubic`, `EaseOutCubic`, `EaseInOutCubic`, `EaseInSine`, `EaseOutSine`, `EaseInOutSine` - Built-in easing functions
+- `EasingFunction` - Type for custom easing functions (users can create their own)
 
 ### Standard Library Compatibility
 

@@ -1,7 +1,5 @@
 package color
 
-import "math"
-
 // SRGBSpace represents the sRGB color space (D65 white point, sRGB primaries, sRGB transfer function)
 var SRGBSpace Space = &rgbSpace{
 	name:           "sRGB",
@@ -73,31 +71,5 @@ func (s *rgbSpace) FromXYZ(x, y, z float64) []float64 {
 	b := s.transferFunc(linearB)
 	
 	return []float64{r, g, b}
-}
-
-// sRGBTransfer applies sRGB gamma correction
-func sRGBTransfer(linear float64) float64 {
-	if linear <= 0.0031308 {
-		return 12.92 * linear
-	}
-	return 1.055*math.Pow(linear, 1.0/2.4) - 0.055
-}
-
-// sRGBInverseTransfer reverses sRGB gamma correction
-func sRGBInverseTransfer(encoded float64) float64 {
-	if encoded <= 0.04045 {
-		return encoded / 12.92
-	}
-	return math.Pow((encoded+0.055)/1.055, 2.4)
-}
-
-// linearTransfer is the identity function (no encoding)
-func linearTransfer(linear float64) float64 {
-	return linear
-}
-
-// linearInverseTransfer is the identity function (no decoding)
-func linearInverseTransfer(encoded float64) float64 {
-	return encoded
 }
 

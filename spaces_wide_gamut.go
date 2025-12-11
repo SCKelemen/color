@@ -1,7 +1,5 @@
 package color
 
-import "math"
-
 // DisplayP3Space represents Display P3 color space
 var DisplayP3Space Space = &rgbSpace{
 	name: "display-p3",
@@ -68,41 +66,5 @@ var Rec2020Space Space = &rgbSpace{
 	},
 	transferFunc:        rec2020Transfer,
 	inverseTransferFunc: rec2020InverseTransfer,
-}
-
-// gammaTransferFunc creates a gamma transfer function
-func gammaTransferFunc(gamma float64) func(float64) float64 {
-	return func(linear float64) float64 {
-		if linear < 0 {
-			return 0
-		}
-		return math.Pow(linear, 1.0/gamma)
-	}
-}
-
-// gammaInverseTransferFunc creates a gamma inverse transfer function
-func gammaInverseTransferFunc(gamma float64) func(float64) float64 {
-	return func(encoded float64) float64 {
-		if encoded < 0 {
-			return 0
-		}
-		return math.Pow(encoded, gamma)
-	}
-}
-
-// rec2020Transfer is the Rec. 2020 transfer function (simplified to gamma 2.4)
-func rec2020Transfer(linear float64) float64 {
-	if linear < 0 {
-		return 0
-	}
-	return math.Pow(linear, 1.0/2.4)
-}
-
-// rec2020InverseTransfer is the Rec. 2020 inverse transfer function
-func rec2020InverseTransfer(encoded float64) float64 {
-	if encoded < 0 {
-		return 0
-	}
-	return math.Pow(encoded, 2.4)
 }
 

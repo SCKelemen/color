@@ -212,6 +212,22 @@ func interpolateMultiStop(stops []GradientStop, t float64, space GradientSpace) 
 }
 
 // EasingFunction defines a function that maps a linear progress [0, 1] to an eased progress [0, 1].
+// Users can create custom easing functions by implementing this interface.
+//
+// Requirements:
+//   - Input t should be in range [0, 1]
+//   - Output should be in range [0, 1]
+//   - Should map 0 to 0 and 1 to 1
+//
+// Example of creating a custom easing function:
+//
+//	// Custom exponential easing
+//	myEasing := color.EasingFunction(func(t float64) float64 {
+//	    return 1 - math.Pow(1-t, 3) // Ease-out cubic
+//	})
+//
+//	// Use it in a gradient
+//	gradient := color.GradientWithEasing(red, blue, 20, color.GradientOKLCH, myEasing)
 type EasingFunction func(t float64) float64
 
 // Easing functions for non-linear gradients
