@@ -172,11 +172,11 @@ func generateXYZGamutComparison(spaces []struct {
 
 	// Color coding for each gamut
 	gamutColors := map[string]color.RGBA{
-		"sRGB":         {255, 0, 0, 200},      // Red
-		"DisplayP3":    {0, 255, 0, 200},      // Green
-		"AdobeRGB":     {0, 0, 255, 200},      // Blue
-		"ProPhotoRGB":  {255, 255, 0, 200},    // Yellow
-		"Rec2020":      {255, 0, 255, 200},    // Magenta
+		"sRGB":        {255, 0, 0, 200},   // Red
+		"DisplayP3":   {0, 255, 0, 200},   // Green
+		"AdobeRGB":    {0, 0, 255, 200},   // Blue
+		"ProPhotoRGB": {255, 255, 0, 200}, // Yellow
+		"Rec2020":     {255, 0, 255, 200}, // Magenta
 	}
 
 	// Draw each gamut as a wireframe
@@ -223,9 +223,9 @@ func generateXYZGamutComparison(spaces []struct {
 		// Draw edges of RGB cube in XYZ space
 		edges := [][]int{
 			{0, 1}, {0, 2}, {0, 3}, // From black corner
-			{1, 4}, {1, 5},         // From red corner
-			{2, 4}, {2, 6},         // From green corner
-			{3, 5}, {3, 6},         // From blue corner
+			{1, 4}, {1, 5}, // From red corner
+			{2, 4}, {2, 6}, // From green corner
+			{3, 5}, {3, 6}, // From blue corner
 			{4, 7}, {5, 7}, {6, 7}, // To white corner
 		}
 
@@ -309,7 +309,7 @@ func generateXYZGamutComparison(spaces []struct {
 	squareSize := int(20 * float64(scale))
 	spacing := int(10 * float64(scale))
 	maxTextWidth := 0
-	
+
 	// Create a font face for accurate text measurement
 	var scaledFace font.Face
 	if defaultTT != nil {
@@ -329,7 +329,7 @@ func generateXYZGamutComparison(spaces []struct {
 			}
 		}
 	}
-	
+
 	// Fallback if font measurement failed
 	if maxTextWidth == 0 {
 		for _, space := range spaces {
@@ -339,7 +339,7 @@ func generateXYZGamutComparison(spaces []struct {
 			}
 		}
 	}
-	
+
 	// Calculate legend item height (square size or text height, whichever is larger)
 	itemHeight := squareSize
 	if scaledFace != nil {
@@ -349,49 +349,55 @@ func generateXYZGamutComparison(spaces []struct {
 			itemHeight = fontHeight
 		}
 	}
-	
+
 	// Use layout library to create a vertical stack for the legend
 	// Important: Set MinHeight explicitly for VStack items to prevent collapsing
 	legendItems := make([]*layout.Node, len(spaces))
 	itemSpacing := float64(15 * scale)
-	
+
 	for i := range spaces {
 		// Create fixed-size item with explicit MinHeight
 		item := layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
 		// Ensure MinHeight is set (Fixed should set Height, but set MinHeight too for safety)
 		item.Style.MinHeight = float64(itemHeight)
 		
-		// Add top padding/spacing to all items except the first
+		// Add top margin to all items except the first for spacing
+		// Using margin instead of padding so it creates space between items
 		if i > 0 {
-			item = layout.PaddingCustom(item, itemSpacing, 0, 0, 0) // top padding only
+			item = layout.Margin(item, itemSpacing)
+			// But we only want top margin, so set margin explicitly
+			item.Style.Margin.Top = itemSpacing
+			item.Style.Margin.Right = 0
+			item.Style.Margin.Bottom = 0
+			item.Style.Margin.Left = 0
 		}
 		
 		legendItems[i] = item
 	}
-	
+
 	legendStack := layout.VStack(legendItems...)
-	
+
 	// Layout the legend to get its actual size
 	legendConstraints := layout.Loose(float64(scaledWidth), float64(scaledHeight))
 	legendSize := layout.Layout(legendStack, legendConstraints)
-	
+
 	// Position legend in bottom left with proper margins
 	legendX := int(50 * float64(scale)) // Margin from left
 	legendY := int(float64(scaledHeight) - labelReserve*0.5 - legendSize.Height)
-	
+
 	// Draw legend items - use the layout-calculated positions
 	for i, space := range spaces {
 		gamutColor := gamutColors[space.colorName]
 		if gamutColor.A == 0 {
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
-		
+
 		// Get item position from layout
 		// After Layout() is called, itemNode.Rect contains the position relative to its parent (legendStack)
 		itemNode := legendItems[i]
 		// Use Rect directly - it's set by Layout() and is relative to the parent
 		itemY := legendY + int(itemNode.Rect.Y)
-		
+
 		// Draw color square
 		squareY := itemY + (itemHeight-squareSize)/2 // Center square vertically
 		for y := 0; y < squareSize; y++ {
@@ -403,7 +409,7 @@ func generateXYZGamutComparison(spaces []struct {
 				}
 			}
 		}
-		
+
 		// Draw label
 		labelX := legendX + squareSize + spacing
 		labelY := itemY + itemHeight/2 // Center text vertically
@@ -425,13 +431,13 @@ func generateXYZGamutComparison(spaces []struct {
 	// Find bounding box and crop
 	// Make sure to include the legend area in the bounding box
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
-	
+
 	// Use layout library to calculate exact legend bounds
 	legendXForBounds := legendX
 	legendWidth := int(legendSize.Width)
 	legendStartY := legendY
 	legendEndY := legendY + int(legendSize.Height)
-	
+
 	// Expand bounding box to include legend if needed
 	if legendXForBounds < minXImg {
 		minXImg = legendXForBounds
@@ -445,7 +451,7 @@ func generateXYZGamutComparison(spaces []struct {
 	if legendEndY > maxYImg {
 		maxYImg = legendEndY
 	}
-	
+
 	// Use larger padding to ensure nothing gets cut off
 	imgPadding := 50 * scale // Increased padding even more
 	croppedWidth := (maxXImg - minXImg) + (imgPadding * 2)
@@ -495,14 +501,14 @@ func convertRGBSpaceToXYZ(r, g, b float64, spaceName string) *col.XYZ {
 	// Since we can't access the private RGBColorSpace structs, we'll use ConvertFromRGBSpace
 	// which does RGB->XYZ->sRGB, then convert the sRGB result back to XYZ
 	// Actually, a better approach: create an RGB color in the space, convert to XYZ
-	
+
 	// The issue is ConvertFromRGBSpace converts RGB->XYZ->sRGB, losing the original XYZ
 	// We need to access the RGBColorSpace's ConvertRGBToXYZ directly
 	// Since it's not exported, let's use a workaround: create a temporary color and extract XYZ
-	
+
 	// Actually, the simplest: use ConvertFromRGBSpace to get the color, then convert back to XYZ
 	// But that's lossy. Instead, let's manually implement the conversion using known matrices.
-	
+
 	// For now, let's use the conversion matrices directly (hardcoded from rgb_spaces.go)
 	switch spaceName {
 	case "display-p3":
@@ -558,4 +564,3 @@ func inverseSRGBTransfer(encoded float64) float64 {
 	}
 	return math.Pow((encoded+0.055)/1.055, 2.4)
 }
-
