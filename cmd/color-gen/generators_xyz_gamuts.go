@@ -386,13 +386,11 @@ func generateXYZGamutComparison(spaces []struct {
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
 		
-		// Get item position from layout using GetFinalRect
-		// Note: GetFinalRect returns position relative to the parent (legendStack)
+		// Get item position from layout
+		// After Layout() is called, itemNode.Rect contains the position relative to its parent (legendStack)
 		itemNode := legendItems[i]
-		itemRect := layout.GetFinalRect(itemNode)
-		// Position relative to the legend stack's position
-		// The itemRect.Y is relative to the legendStack, so we add it to legendY
-		itemY := legendY + int(itemRect.Y)
+		// Use Rect directly - it's set by Layout() and is relative to the parent
+		itemY := legendY + int(itemNode.Rect.Y)
 		
 		// Draw color square
 		squareY := itemY + (itemHeight-squareSize)/2 // Center square vertically
