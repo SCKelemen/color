@@ -201,15 +201,19 @@ func generateXYZGamutComparison(spaces []struct {
 
 		for i, p := range points {
 			xyz := space.convert(p.r, p.g, p.b)
-			// Apply 3D rotation
-			x, y, z := rotate3D(xyz.X, xyz.Y, xyz.Z, angleY, angleX, angleZ)
+			// First scale to normalized coordinates centered at origin
+			xNorm := (xyz.X - (minX+maxX)/2) * uniformScale
+			yNorm := (xyz.Y - (minY+maxY)/2) * uniformScale
+			zNorm := (xyz.Z - (minZ+maxZ)/2) * uniformScale
+			// Then apply 3D rotation
+			xRot, yRot, zRot := rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
 			// Project to 2D (isometric)
-			px := centerX + (x-minX)*scaleX
-			py := centerY - (y-minY)*scaleY - (z-minZ)*scaleZ
+			px := centerX + xRot
+			py := centerY - yRot - zRot*0.5 // Isometric projection
 			projected[i] = struct {
 				x, y float64
 				z    float64
-			}{px, py, z}
+			}{px, py, zRot}
 		}
 
 		// Draw edges of RGB cube in XYZ space
