@@ -352,30 +352,27 @@ func generateXYZGamutComparison(spaces []struct {
 
 	// Use layout library to create a vertical stack for the legend
 	// Important: Set MinHeight explicitly for VStack items to prevent collapsing
-	legendItems := make([]*layout.Node, len(spaces))
+	// Build items with spacers between them for proper spacing
 	itemSpacing := float64(15 * scale)
-
+	var legendChildren []*layout.Node
+	
 	for i := range spaces {
+		// Add spacer before each item except the first
+		if i > 0 {
+			spacer := layout.Fixed(1, itemSpacing) // Fixed height spacer
+			spacer.Style.MinHeight = itemSpacing
+			legendChildren = append(legendChildren, spacer)
+		}
+		
 		// Create fixed-size item with explicit MinHeight
 		item := layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
 		// Ensure MinHeight is set (Fixed should set Height, but set MinHeight too for safety)
 		item.Style.MinHeight = float64(itemHeight)
 		
-		// Add top margin to all items except the first for spacing
-		// Using margin instead of padding so it creates space between items
-		if i > 0 {
-			item = layout.Margin(item, itemSpacing)
-			// But we only want top margin, so set margin explicitly
-			item.Style.Margin.Top = itemSpacing
-			item.Style.Margin.Right = 0
-			item.Style.Margin.Bottom = 0
-			item.Style.Margin.Left = 0
-		}
-		
-		legendItems[i] = item
+		legendChildren = append(legendChildren, item)
 	}
-
-	legendStack := layout.VStack(legendItems...)
+	
+	legendStack := layout.VStack(legendChildren...)
 
 	// Layout the legend to get its actual size
 	legendConstraints := layout.Loose(float64(scaledWidth), float64(scaledHeight))
@@ -386,17 +383,27 @@ func generateXYZGamutComparison(spaces []struct {
 	legendY := int(float64(scaledHeight) - labelReserve*0.5 - legendSize.Height)
 
 	// Draw legend items - use the layout-calculated positions
-	for i, space := range spaces {
+	// Note: legendChildren includes spacers, so we need to track which nodes are actual items
+	itemIndex := 0
+	for i, child := range legendChildren {
+		// Skip spacer nodes (they have width 1)
+		if child.Style.Width == 1 && child.Style.Height == itemSpacing {
+			continue
+		}
+		
+		// This is an actual legend item
+		space := spaces[itemIndex]
+		itemIndex++
+		
 		gamutColor := gamutColors[space.colorName]
 		if gamutColor.A == 0 {
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
-
+		
 		// Get item position from layout
-		// After Layout() is called, itemNode.Rect contains the position relative to its parent (legendStack)
-		itemNode := legendItems[i]
+		// After Layout() is called, child.Rect contains the position relative to its parent (legendStack)
 		// Use Rect directly - it's set by Layout() and is relative to the parent
-		itemY := legendY + int(itemNode.Rect.Y)
+		itemY := legendY + int(child.Rect.Y)
 
 		// Draw color square
 		squareY := itemY + (itemHeight-squareSize)/2 // Center square vertically
