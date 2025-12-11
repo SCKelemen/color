@@ -21,9 +21,10 @@
    - Carries space metadata
    - Operations work in native space
 
-3. **Reference Space**: XYZ (or OKLAB for perceptually uniform operations)
-   - All inter-space conversions go through reference space
-   - Provides lossless conversion hub
+3. **Reference Space**: Single canonical reference = XYZ (D65)
+   - All inter-space conversions go through XYZ (D65) with chromatic adaptation as needed
+   - Provides the lossless conversion hub
+   - Perceptual “working” space: OKLCH is used for operations (lighten/darken/saturate), but conversions still route through XYZ as the only reference hub (no second reference space)
 
 ### Type System
 
