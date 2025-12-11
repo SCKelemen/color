@@ -68,7 +68,10 @@ func generateChromaticityDiagram(createColor func(r, g, b float64) col.Color, wi
 	scaleX := (float64(width) - 2*margin) / (maxX - minX)
 	scaleY := (float64(height) - 2*margin) / (maxY - minY)
 
-	// Draw spectral locus (horseshoe shape)
+	// First, fill the visible gamut area with colors
+	fillChromaticityColors(img, margin, margin, scaleX, scaleY, minX, minY, maxY, createColor)
+
+	// Draw spectral locus (horseshoe shape) on top
 	drawSpectralLocus(img, margin, margin, scaleX, scaleY, minX, minY, maxY)
 
 	// Draw gamut boundary for this RGB space
@@ -78,6 +81,110 @@ func generateChromaticityDiagram(createColor func(r, g, b float64) col.Color, wi
 	drawWhitePoint(img, margin, margin, scaleX, scaleY, minX, minY, maxY)
 
 	return img
+}
+
+func fillChromaticityColors(img *image.RGBA, offsetX, offsetY, scaleX, scaleY, minX, minY, maxY float64, createColor func(r, g, b float64) col.Color) {
+	// Fill the visible gamut area by sampling RGB colors and mapping them to xy coordinates
+	// Create a lookup map from xy coordinates to RGB colors
+	xyToColor := make(map[[2]int]color.RGBA)
+
+	// Sample RGB space densely
+	step := 0.02
+	for r := 0.0; r <= 1.0; r += step {
+		for g := 0.0; g <= 1.0; g += step {
+			for b := 0.0; b <= 1.0; b += step {
+				c := createColor(r, g, b)
+				xyz := col.ToXYZ(c)
+				sum := xyz.X + xyz.Y + xyz.Z
+				if sum > 0.001 {
+					x := xyz.X / sum
+					y := xyz.Y / sum
+
+					// Map to pixel coordinates
+					px := int(offsetX + scaleX*(x-minX))
+					py := int(offsetY + scaleY*(maxY-y))
+
+					if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+						// Store the color for this pixel
+						r8, g8, b8, _ := c.RGBA()
+						key := [2]int{px, py}
+						// Use the most saturated color for each pixel (or average)
+						if existing, ok := xyToColor[key]; !ok {
+							xyToColor[key] = color.RGBA{
+								uint8(clamp255(r8 * 255)),
+								uint8(clamp255(g8 * 255)),
+								uint8(clamp255(b8 * 255)),
+								255,
+							}
+						} else {
+							// Average with existing (for smoother result)
+							xyToColor[key] = color.RGBA{
+								uint8((int(existing.R) + int(clamp255(r8*255))) / 2),
+								uint8((int(existing.G) + int(clamp255(g8*255))) / 2),
+								uint8((int(existing.B) + int(clamp255(b8*255))) / 2),
+								255,
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Fill pixels with colors, using flood fill for smooth coverage
+	for key, col := range xyToColor {
+		img.Set(key[0], key[1], col)
+	}
+
+	// Fill gaps by interpolating nearby colors
+	for py := 0; py < img.Bounds().Dy(); py++ {
+		for px := 0; px < img.Bounds().Dx(); px++ {
+			if img.RGBAAt(px, py).A == 0 {
+				// Find nearest colored pixel
+				nearest := findNearestColor(img, px, py, 10)
+				if nearest.A > 0 {
+					img.Set(px, py, nearest)
+				}
+			}
+		}
+	}
+}
+
+func findNearestColor(img *image.RGBA, x, y, radius int) color.RGBA {
+	for r := 1; r <= radius; r++ {
+		for dy := -r; dy <= r; dy++ {
+			for dx := -r; dx <= r; dx++ {
+				if dx*dx+dy*dy > r*r {
+					continue
+				}
+				nx, ny := x+dx, y+dy
+				if nx >= 0 && nx < img.Bounds().Dx() && ny >= 0 && ny < img.Bounds().Dy() {
+					c := img.RGBAAt(nx, ny)
+					if c.A > 0 {
+						return c
+					}
+				}
+			}
+		}
+	}
+	return color.RGBA{0, 0, 0, 0}
+}
+
+func absFloat(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func clamp255(v float64) int {
+	if v < 0 {
+		return 0
+	}
+	if v > 255 {
+		return 255
+	}
+	return int(v)
 }
 
 func drawSpectralLocus(img *image.RGBA, offsetX, offsetY, scaleX, scaleY, minX, minY, maxY float64) {

@@ -87,19 +87,43 @@ Chromaticity diagrams show the color gamut of each RGB color space projected ont
 
 ### Gamut Volumes
 
-The following images show the 3D volume of each color space's gamut in an isometric projection. Each gamut represents the complete range of colors that can be represented in that space.
+The following images show the 3D volume of each color space's gamut in an isometric projection. Each gamut represents the complete range of colors that can be represented in that space. Images are provided in both light and dark mode variants for responsive documentation.
 
-![sRGB Gamut](docs/gamuts/gamut_sRGB.png)
+#### sRGB Gamut
+![sRGB Gamut (Light Mode)](docs/gamuts/gamut_sRGB_black.png)
+![sRGB Gamut (Dark Mode)](docs/gamuts/gamut_sRGB_white.png)
 *sRGB gamut - the standard web color space*
 
-![Display P3 Gamut](docs/gamuts/gamut_DisplayP3.png)
+#### Display P3 Gamut
+![Display P3 Gamut (Light Mode)](docs/gamuts/gamut_DisplayP3_black.png)
+![Display P3 Gamut (Dark Mode)](docs/gamuts/gamut_DisplayP3_white.png)
 *Display P3 gamut - wider than sRGB, especially in greens and reds*
 
-![Adobe RGB Gamut](docs/gamuts/gamut_AdobeRGB.png)
+#### Adobe RGB Gamut
+![Adobe RGB Gamut (Light Mode)](docs/gamuts/gamut_AdobeRGB_black.png)
+![Adobe RGB Gamut (Dark Mode)](docs/gamuts/gamut_AdobeRGB_white.png)
 *Adobe RGB gamut - wider than sRGB, particularly in cyan-green*
 
-![Rec. 2020 Gamut](docs/gamuts/gamut_Rec2020.png)
+#### Rec. 2020 Gamut
+![Rec. 2020 Gamut (Light Mode)](docs/gamuts/gamut_Rec2020_black.png)
+![Rec. 2020 Gamut (Dark Mode)](docs/gamuts/gamut_Rec2020_white.png)
 *Rec. 2020 gamut - very wide, designed for future display technologies*
+
+### Color Model Visualizations
+
+The following diagrams illustrate how different color models represent the color space. Each model has a different geometric structure that affects how colors are organized and interpolated.
+
+![RGB Cube](docs/models/model_rgb_cube.png)
+*RGB color model - cubic structure with red, green, and blue axes*
+
+![HSL Cylinder](docs/models/model_hsl_cylinder.png)
+*HSL color model - cylindrical structure with hue around the circumference, saturation as radius, and lightness as height*
+
+![LAB Space](docs/models/model_lab_space.png)
+*LAB color model - perceptually uniform space with L (lightness), A (green-red), and B (blue-yellow) axes*
+
+![OKLCH Space](docs/models/model_oklch_space.png)
+*OKLCH color model - modern perceptually uniform cylindrical space with L (lightness), C (chroma), and H (hue)*
 
 ### Gradient Comparisons
 
@@ -146,9 +170,10 @@ The color stops image shows the start and end colors used in all gradient exampl
 
 All visualizations are generated programmatically:
 - `docs/chromaticity/`: CIE xy chromaticity diagrams for sRGB, Display P3, Adobe RGB, Rec. 2020 (via `cmd/generate_chromaticity`)
-- `docs/gamuts/`: Isometric 3D volume visualizations for sRGB, Display P3, Adobe RGB, Rec. 2020 (via `cmd/generate_gamuts`)
+- `docs/gamuts/`: Isometric 3D volume visualizations for sRGB, Display P3, Adobe RGB, Rec. 2020 with labels, in both light and dark mode variants (via `cmd/generate_gamuts`)
 - `docs/gradients/`: Gradient strips in RGB, HSL, Lab, OKLab, LCH, OKLCH with transparent backgrounds and dual-text labels (via `cmd/generate_gradients`)
 - `docs/gradients/stops.png`: Color stop squares aligned to gradient width (via `cmd/generate_stops`)
+- `docs/models/`: Color model visualizations showing RGB cube, HSL cylinder, LAB space, and OKLCH space (via `cmd/generate_models`)
 
 ## Key takeaways
 - Single reference hub: **XYZ (D65)**.
