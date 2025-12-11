@@ -67,9 +67,88 @@ gHSL := color.GradientInSpace(red, blue, 10, color.GradientHSL)
 gRGB := color.GradientInSpace(red, blue, 10, color.GradientRGB)
 ```
 
-## Planned visuals (add later)
-- Gamut slices (2D) for sRGB vs P3 vs Rec.2020 in a reference space (Lab/OKLab).
-- Gradient strips comparing RGB, HSL, Lab, OKLab/OKLCH for the same stops.
+## Visual Examples
+
+### Chromaticity Diagrams
+
+Chromaticity diagrams show the color gamut of each RGB color space projected onto the CIE xy chromaticity plane. The horseshoe-shaped curve represents the spectral locus (pure spectral colors), and the triangle shows the gamut boundary of each RGB space.
+
+![sRGB Chromaticity](docs/chromaticity/chromaticity_sRGB.png)
+*sRGB chromaticity diagram - shows the gamut triangle within the visible color spectrum*
+
+![Display P3 Chromaticity](docs/chromaticity/chromaticity_DisplayP3.png)
+*Display P3 chromaticity diagram - wider gamut than sRGB*
+
+![Adobe RGB Chromaticity](docs/chromaticity/chromaticity_AdobeRGB.png)
+*Adobe RGB chromaticity diagram - wider gamut, especially in cyan-green*
+
+![Rec. 2020 Chromaticity](docs/chromaticity/chromaticity_Rec2020.png)
+*Rec. 2020 chromaticity diagram - very wide gamut for future display technologies*
+
+### Gamut Volumes
+
+The following images show the 3D volume of each color space's gamut in an isometric projection. Each gamut represents the complete range of colors that can be represented in that space.
+
+![sRGB Gamut](docs/gamuts/gamut_sRGB.png)
+*sRGB gamut - the standard web color space*
+
+![Display P3 Gamut](docs/gamuts/gamut_DisplayP3.png)
+*Display P3 gamut - wider than sRGB, especially in greens and reds*
+
+![Adobe RGB Gamut](docs/gamuts/gamut_AdobeRGB.png)
+*Adobe RGB gamut - wider than sRGB, particularly in cyan-green*
+
+![Rec. 2020 Gamut](docs/gamuts/gamut_Rec2020.png)
+*Rec. 2020 gamut - very wide, designed for future display technologies*
+
+### Gradient Comparisons
+
+The following images demonstrate how the same color stops (red to blue) appear when interpolated in different color spaces. Notice how RGB and HSL produce less uniform transitions, while OKLCH produces the smoothest, most perceptually uniform gradient.
+
+#### RGB Interpolation
+![RGB Gradient (Light Mode)](docs/gradients/gradient_rgb_black.png)
+![RGB Gradient (Dark Mode)](docs/gradients/gradient_rgb_white.png)
+*RGB interpolation - notice the "muddy" middle section and uneven transitions*
+
+#### HSL Interpolation
+![HSL Gradient (Light Mode)](docs/gradients/gradient_hsl_black.png)
+![HSL Gradient (Dark Mode)](docs/gradients/gradient_hsl_white.png)
+*HSL interpolation - hue-based, but lightness may feel uneven*
+
+#### LAB Interpolation
+![LAB Gradient (Light Mode)](docs/gradients/gradient_lab_black.png)
+![LAB Gradient (Dark Mode)](docs/gradients/gradient_lab_white.png)
+*LAB interpolation - more perceptually uniform than RGB/HSL*
+
+#### OKLAB Interpolation
+![OKLAB Gradient (Light Mode)](docs/gradients/gradient_oklab_black.png)
+![OKLAB Gradient (Dark Mode)](docs/gradients/gradient_oklab_white.png)
+*OKLAB interpolation - modern, perceptually uniform space*
+
+#### LCH Interpolation
+![LCH Gradient (Light Mode)](docs/gradients/gradient_lch_black.png)
+![LCH Gradient (Dark Mode)](docs/gradients/gradient_lch_white.png)
+*LCH interpolation - cylindrical representation of LAB*
+
+#### OKLCH Interpolation (Recommended)
+![OKLCH Gradient (Light Mode)](docs/gradients/gradient_oklch_black.png)
+![OKLCH Gradient (Dark Mode)](docs/gradients/gradient_oklch_white.png)
+*OKLCH interpolation - **recommended** for perceptually uniform gradients*
+
+### Color Stops
+
+The color stops image shows the start and end colors used in all gradient examples, aligned to match the gradient bar width (830px).
+
+![Color Stops](docs/gradients/stops.png)
+*Start (red) and end (blue) color stops with hex codes*
+
+### Generated Assets
+
+All visualizations are generated programmatically:
+- `docs/chromaticity/`: CIE xy chromaticity diagrams for sRGB, Display P3, Adobe RGB, Rec. 2020 (via `cmd/generate_chromaticity`)
+- `docs/gamuts/`: Isometric 3D volume visualizations for sRGB, Display P3, Adobe RGB, Rec. 2020 (via `cmd/generate_gamuts`)
+- `docs/gradients/`: Gradient strips in RGB, HSL, Lab, OKLab, LCH, OKLCH with transparent backgrounds and dual-text labels (via `cmd/generate_gradients`)
+- `docs/gradients/stops.png`: Color stop squares aligned to gradient width (via `cmd/generate_stops`)
 
 ## Key takeaways
 - Single reference hub: **XYZ (D65)**.
