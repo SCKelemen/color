@@ -387,9 +387,11 @@ func generateXYZGamutComparison(spaces []struct {
 		}
 		
 		// Get item position from layout using GetFinalRect
+		// Note: GetFinalRect returns position relative to the parent (legendStack)
 		itemNode := legendItems[i]
 		itemRect := layout.GetFinalRect(itemNode)
 		// Position relative to the legend stack's position
+		// The itemRect.Y is relative to the legendStack, so we add it to legendY
 		itemY := legendY + int(itemRect.Y)
 		
 		// Draw color square
