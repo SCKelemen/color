@@ -86,16 +86,17 @@ func generateRGBCubeFrame(frame, totalFrames int) *image.RGBA {
 			py := int(centerY - rotY*scale)
 
 			if px >= 0 && px < width && py >= 0 && py < height {
-				// Ensure values are in [0, 1] range and convert to uint8
-				r8 := clamp01(rgbR) * 255
-				g8 := clamp01(rgbG) * 255
-				b8 := clamp01(rgbB) * 255
-				img.Set(px, py, color.RGBA{
-					uint8(r8),
-					uint8(g8),
-					uint8(b8),
-					255,
-				})
+				// Only draw if color is valid and within sRGB gamut
+				// RGBA() already returns clamped [0, 1] values in sRGB space
+				if rgbR >= 0 && rgbR <= 1 && rgbG >= 0 && rgbG <= 1 && rgbB >= 0 && rgbB <= 1 {
+					// Convert normalized [0, 1] to uint8 [0, 255]
+					img.Set(px, py, color.RGBA{
+						uint8(rgbR * 255),
+						uint8(rgbG * 255),
+						uint8(rgbB * 255),
+						255,
+					})
+				}
 			}
 		}
 	}
@@ -141,16 +142,17 @@ func generateHSLCylinderFrame(frame, totalFrames int) *image.RGBA {
 				dy := y - centerY
 				dist := math.Sqrt(dx*dx + dy*dy)
 				if dist <= radius {
-					// Ensure values are in [0, 1] range and convert to uint8
-					r8 := clamp01(r) * 255
-					g8 := clamp01(g) * 255
-					b8 := clamp01(b) * 255
-					img.Set(int(x), int(y), color.RGBA{
-						uint8(r8),
-						uint8(g8),
-						uint8(b8),
-						255,
-					})
+					// Only draw if color is valid and within sRGB gamut
+					// RGBA() already returns clamped [0, 1] values in sRGB space
+					if r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+						// Convert normalized [0, 1] to uint8 [0, 255]
+						img.Set(int(x), int(y), color.RGBA{
+							uint8(r * 255),
+							uint8(g * 255),
+							uint8(b * 255),
+							255,
+						})
+					}
 				}
 			}
 		}
@@ -196,16 +198,17 @@ func generateLABSpaceFrame(frame, totalFrames int) *image.RGBA {
 			py := int(centerY - rotY*scale)
 
 			if px >= 0 && px < width && py >= 0 && py < height {
-				// Ensure values are in [0, 1] range and convert to uint8
-				r8 := clamp01(r) * 255
-				g8 := clamp01(g) * 255
-				b8 := clamp01(b) * 255
-				img.Set(px, py, color.RGBA{
-					uint8(r8),
-					uint8(g8),
-					uint8(b8),
-					255,
-				})
+				// Only draw if color is valid and within sRGB gamut
+				// RGBA() already returns clamped [0, 1] values in sRGB space
+				if r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+					// Convert normalized [0, 1] to uint8 [0, 255]
+					img.Set(px, py, color.RGBA{
+						uint8(r * 255),
+						uint8(g * 255),
+						uint8(b * 255),
+						255,
+					})
+				}
 			}
 		}
 	}
@@ -250,14 +253,13 @@ func generateOKLCHSpaceFrame(frame, totalFrames int) *image.RGBA {
 				py := int(centerY - c*maxRadius*math.Sin(hueAngle))
 
 				if px >= 0 && px < width && py >= 0 && py < height {
-					// Ensure values are in [0, 1] range and convert to uint8
-					r8 := clamp01(r) * 255
-					g8 := clamp01(g) * 255
-					b8 := clamp01(b) * 255
+					// Only draw if color is valid and within sRGB gamut
+					// RGBA() already returns clamped [0, 1] values in sRGB space
+					// Convert normalized [0, 1] to uint8 [0, 255]
 					img.Set(px, py, color.RGBA{
-						uint8(r8),
-						uint8(g8),
-						uint8(b8),
+						uint8(r * 255),
+						uint8(g * 255),
+						uint8(b * 255),
 						255,
 					})
 				}
