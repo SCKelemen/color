@@ -355,7 +355,7 @@ func generateXYZGamutComparison(spaces []struct {
 	// Build items with spacers between them for proper spacing
 	itemSpacing := float64(15 * scale)
 	var legendChildren []*layout.Node
-	
+
 	for i := range spaces {
 		// Add spacer before each item except the first
 		if i > 0 {
@@ -365,15 +365,15 @@ func generateXYZGamutComparison(spaces []struct {
 			spacer.Style.Height = itemSpacing
 			legendChildren = append(legendChildren, spacer)
 		}
-		
+
 		// Create fixed-size item with explicit MinHeight
 		item := layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
 		// Ensure MinHeight is set (Fixed should set Height, but set MinHeight too for safety)
 		item.Style.MinHeight = float64(itemHeight)
-		
+
 		legendChildren = append(legendChildren, item)
 	}
-	
+
 	legendStack := layout.VStack(legendChildren...)
 
 	// Layout the legend to get its actual size
@@ -392,16 +392,16 @@ func generateXYZGamutComparison(spaces []struct {
 		if child.Style.Width == 0 && child.Style.Height == itemSpacing {
 			continue
 		}
-		
+
 		// This is an actual legend item
 		space := spaces[itemIndex]
 		itemIndex++
-		
+
 		gamutColor := gamutColors[space.colorName]
 		if gamutColor.A == 0 {
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
-		
+
 		// Get item position from layout
 		// After Layout() is called, child.Rect contains the position relative to its parent (legendStack)
 		// Use Rect directly - it's set by Layout() and is relative to the parent
