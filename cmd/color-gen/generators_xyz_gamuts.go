@@ -152,10 +152,15 @@ func generateXYZGamutComparison(spaces []struct {
 	minZ -= rangeZ * padding
 	maxZ += rangeZ * padding
 
+	// Recalculate ranges after padding
+	rangeX = maxX - minX
+	rangeY = maxY - minY
+	rangeZ = maxZ - minZ
+
 	// Calculate scale to fit in image
-	scaleX := float64(scaledWidth) * 0.7 / rangeX
-	scaleY := float64(scaledHeight) * 0.6 / rangeY
-	scaleZ := math.Min(scaleX, scaleY) * 0.8
+	// Use a uniform scale based on the largest dimension to maintain aspect ratio
+	maxRange := math.Max(rangeX, math.Max(rangeY, rangeZ))
+	uniformScale := math.Min(float64(scaledWidth)*0.7, float64(scaledHeight)*0.6) / maxRange
 
 	centerX := float64(scaledWidth) / 2
 	labelReserve := float64(scaledHeight) * 0.15
