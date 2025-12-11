@@ -50,69 +50,38 @@ func generateRGBCube(width, height int) *image.RGBA {
 		}
 	}
 
-	// Draw RGB cube in isometric view
-	// Cube vertices: (0,0,0) to (1,1,1)
+	// Draw RGB cube showing a slice through the cube
+	// Show a slice at G=0.5 to see R and B variations
 	centerX := float64(width) / 2
 	centerY := float64(height) / 2
-	scale := float64(width) * 0.3
+	scale := float64(width) * 0.4
 
-	// Isometric projection angles
-	angle := math.Pi / 6 // 30 degrees
+	// Sample RGB colors in a 2D slice
+	g := 0.5 // Fixed green value
+	step := 0.01
+	for r := 0.0; r <= 1.0; r += step {
+		for b := 0.0; b <= 1.0; b += step {
+			c := col.RGB(r, g, b)
+			rgbR, rgbG, rgbB, _ := c.RGBA()
 
-	// Project 3D point to 2D
-	project := func(x, y, z float64) (float64, float64) {
-		// Isometric projection
-		px := (x - z) * math.Cos(angle) * scale
-		py := (x + z) * math.Sin(angle) * scale - y*scale
-		return centerX + px, centerY + py
+			// Map to image coordinates (R on X axis, B on Y axis)
+			px := int(centerX + (r-0.5)*scale)
+			py := int(centerY - (b-0.5)*scale) // Invert Y axis
+
+			if px >= 0 && px < width && py >= 0 && py < height {
+				img.Set(px, py, color.RGBA{
+					uint8(clamp255(rgbR * 255)),
+					uint8(clamp255(rgbG * 255)),
+					uint8(clamp255(rgbB * 255)),
+					255,
+				})
+			}
+		}
 	}
 
-	// Draw cube edges
-	edges := [][]float64{
-		// Bottom face
-		{0, 0, 0}, {1, 0, 0}, // R edge
-		{0, 0, 0}, {0, 0, 1}, // B edge
-		{1, 0, 0}, {1, 0, 1}, // R-B edge
-		{0, 0, 1}, {1, 0, 1}, // B-R edge
-		// Top face
-		{0, 1, 0}, {1, 1, 0}, // R edge
-		{0, 1, 0}, {0, 1, 1}, // B edge
-		{1, 1, 0}, {1, 1, 1}, // R-B edge
-		{0, 1, 1}, {1, 1, 1}, // B-R edge
-		// Vertical edges
-		{0, 0, 0}, {0, 1, 0}, // G edge
-		{1, 0, 0}, {1, 1, 0}, // R-G edge
-		{0, 0, 1}, {0, 1, 1}, // B-G edge
-		{1, 0, 1}, {1, 1, 1}, // R-B-G edge
-	}
-
-	for i := 0; i < len(edges); i += 2 {
-		x1, y1 := project(edges[i][0], edges[i][1], edges[i][2])
-		x2, y2 := project(edges[i+1][0], edges[i+1][1], edges[i+1][2])
-		drawLine(img, int(x1), int(y1), int(x2), int(y2), color.RGBA{255, 255, 255, 255}, 2)
-	}
-
-	// Draw colored faces (semi-transparent)
-	// Front face (y=1)
-	x1, y1 := project(0, 1, 0)
-	x2, y2 := project(1, 1, 0)
-	x3, y3 := project(1, 1, 1)
-	x4, y4 := project(0, 1, 1)
-	drawQuad(img, x1, y1, x2, y2, x3, y3, x4, y4, color.RGBA{255, 255, 255, 128})
-
-	// Right face (r=1)
-	x1, y1 = project(1, 0, 0)
-	x2, y2 = project(1, 1, 0)
-	x3, y3 = project(1, 1, 1)
-	x4, y4 = project(1, 0, 1)
-	drawQuad(img, x1, y1, x2, y2, x3, y3, x4, y4, color.RGBA{255, 0, 0, 128})
-
-	// Top face (g=1)
-	x1, y1 = project(0, 1, 0)
-	x2, y2 = project(1, 1, 0)
-	x3, y3 = project(1, 0, 0)
-	x4, y4 = project(0, 0, 0)
-	drawQuad(img, x1, y1, x2, y2, x3, y3, x4, y4, color.RGBA{0, 255, 0, 128})
+	// Draw axes
+	drawLine(img, int(centerX-scale), int(centerY), int(centerX+scale), int(centerY), color.RGBA{255, 255, 255, 255}, 2)
+	drawLine(img, int(centerX), int(centerY-scale), int(centerX), int(centerY+scale), color.RGBA{255, 255, 255, 255}, 2)
 
 	return img
 }
@@ -129,54 +98,32 @@ func generateHSLCylinder(width, height int) *image.RGBA {
 
 	centerX := float64(width) / 2
 	centerY := float64(height) / 2
-	radius := float64(width) * 0.3
-	heightScale := float64(height) * 0.4
+	radius := float64(width) * 0.35
 
-	// Draw cylinder outline
-	// Top circle
-	for angle := 0.0; angle < 2*math.Pi; angle += 0.01 {
-		x := centerX + radius*math.Cos(angle)
-		y := centerY - heightScale/2
-		if x >= 0 && x < float64(width) && y >= 0 && y < float64(height) {
-			img.Set(int(x), int(y), color.RGBA{255, 255, 255, 255})
-		}
-	}
-
-	// Bottom circle
-	for angle := 0.0; angle < 2*math.Pi; angle += 0.01 {
-		x := centerX + radius*math.Cos(angle)
-		y := centerY + heightScale/2
-		if x >= 0 && x < float64(width) && y >= 0 && y < float64(height) {
-			img.Set(int(x), int(y), color.RGBA{255, 255, 255, 255})
-		}
-	}
-
-	// Vertical lines
-	for i := 0; i < 8; i++ {
-		angle := float64(i) * 2 * math.Pi / 8
-		x1 := centerX + radius*math.Cos(angle)
-		y1 := centerY - heightScale/2
-		x2 := centerX + radius*math.Cos(angle)
-		y2 := centerY + heightScale/2
-		drawLine(img, int(x1), int(y1), int(x2), int(y2), color.RGBA{255, 255, 255, 255}, 1)
-	}
-
-	// Fill with HSL colors (sliced at L=0.5)
+	// Fill with HSL colors showing a circular slice (top-down view of cylinder)
+	// Show hue around the circle, saturation as radius, at fixed lightness
 	l := 0.5
-	for s := 0.0; s <= 1.0; s += 0.02 {
-		for h := 0.0; h < 1.0; h += 0.01 {
+	for s := 0.0; s <= 1.0; s += 0.005 {
+		for h := 0.0; h < 1.0; h += 0.005 {
 			c := col.NewHSL(h*360, s, l, 1.0)
 			r, g, b, _ := c.RGBA()
 			angle := h * 2 * math.Pi
+			// Map to circular area centered in the image
 			x := centerX + radius*s*math.Cos(angle)
-			y := centerY - heightScale/2
+			y := centerY + radius*s*math.Sin(angle) // Use sin for Y, not fixed height
 			if x >= 0 && x < float64(width) && y >= 0 && y < float64(height) {
-				img.Set(int(x), int(y), color.RGBA{
-					uint8(clamp255(r * 255)),
-					uint8(clamp255(g * 255)),
-					uint8(clamp255(b * 255)),
-					255,
-				})
+				// Check if point is within the circle
+				dx := x - centerX
+				dy := y - centerY
+				dist := math.Sqrt(dx*dx + dy*dy)
+				if dist <= radius {
+					img.Set(int(x), int(y), color.RGBA{
+						uint8(clamp255(r * 255)),
+						uint8(clamp255(g * 255)),
+						uint8(clamp255(b * 255)),
+						255,
+					})
+				}
 			}
 		}
 	}
@@ -199,19 +146,21 @@ func generateLABSpace(width, height int) *image.RGBA {
 	scale := float64(width) * 0.3
 
 	// Draw LAB space as a slice at L=50
-	// A and B range from -128 to 127, but we'll use normalized [-1, 1]
-	l := 0.5
-	for a := -1.0; a <= 1.0; a += 0.02 {
-		for b := -1.0; b <= 1.0; b += 0.02 {
+	// A and B range from -128 to 127, but we'll use a more limited range that's closer to sRGB gamut
+	l := 50.0
+	step := 0.3
+	for a := -80.0; a <= 80.0; a += step {
+		for b := -80.0; b <= 80.0; b += step {
 			// Convert LAB to RGB
-			lab := col.NewLAB(l*100, a*100, b*100, 1.0)
+			lab := col.NewLAB(l, a, b, 1.0)
 			r, g, b, _ := lab.RGBA()
-			
+
 			// Map to image coordinates
-			px := int(centerX + a*scale)
-			py := int(centerY - b*scale) // Invert Y axis
-			
+			px := int(centerX + (a/100.0)*scale)
+			py := int(centerY - (b/100.0)*scale) // Invert Y axis
+
 			if px >= 0 && px < width && py >= 0 && py < height {
+				// Always draw, even if out of gamut (it will be clamped)
 				img.Set(px, py, color.RGBA{
 					uint8(clamp255(r * 255)),
 					uint8(clamp255(g * 255)),
@@ -223,8 +172,8 @@ func generateLABSpace(width, height int) *image.RGBA {
 	}
 
 	// Draw axes
-	drawLine(img, int(centerX-scale), int(centerY), int(centerX+scale), int(centerY), color.RGBA{255, 255, 255, 255}, 1)
-	drawLine(img, int(centerX), int(centerY-scale), int(centerX), int(centerY+scale), color.RGBA{255, 255, 255, 255}, 1)
+	drawLine(img, int(centerX-scale), int(centerY), int(centerX+scale), int(centerY), color.RGBA{255, 255, 255, 255}, 2)
+	drawLine(img, int(centerX), int(centerY-scale), int(centerX), int(centerY+scale), color.RGBA{255, 255, 255, 255}, 2)
 
 	return img
 }
@@ -245,24 +194,28 @@ func generateOKLCHSpace(width, height int) *image.RGBA {
 
 	// Draw OKLCH space as a slice at L=0.5
 	// C ranges from 0 to ~0.4, H ranges from 0 to 360
+	// Use a more limited chroma range that stays within sRGB gamut
 	l := 0.5
-	for c := 0.0; c <= 0.4; c += 0.005 {
-		for h := 0.0; h < 360.0; h += 1.0 {
+	for c := 0.0; c <= 0.3; c += 0.003 {
+		for h := 0.0; h < 360.0; h += 0.5 {
 			oklch := col.NewOKLCH(l, c, h, 1.0)
 			r, g, b, _ := oklch.RGBA()
-			
-			// Convert polar to Cartesian
-			angle := h * math.Pi / 180.0
-			px := int(centerX + c*maxRadius*math.Cos(angle))
-			py := int(centerY - c*maxRadius*math.Sin(angle)) // Invert Y axis
-			
-			if px >= 0 && px < width && py >= 0 && py < height {
-				img.Set(px, py, color.RGBA{
-					uint8(clamp255(r * 255)),
-					uint8(clamp255(g * 255)),
-					uint8(clamp255(b * 255)),
-					255,
-				})
+
+			// Only draw if color is valid and within sRGB gamut
+			if r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+				// Convert polar to Cartesian
+				angle := h * math.Pi / 180.0
+				px := int(centerX + c*maxRadius*math.Cos(angle))
+				py := int(centerY - c*maxRadius*math.Sin(angle)) // Invert Y axis
+
+				if px >= 0 && px < width && py >= 0 && py < height {
+					img.Set(px, py, color.RGBA{
+						uint8(clamp255(r * 255)),
+						uint8(clamp255(g * 255)),
+						uint8(clamp255(b * 255)),
+						255,
+					})
+				}
 			}
 		}
 	}
@@ -369,4 +322,3 @@ func clamp255(v float64) int {
 	}
 	return int(v)
 }
-
