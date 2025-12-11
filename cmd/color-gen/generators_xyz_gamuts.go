@@ -347,18 +347,18 @@ func generateXYZGamutComparison(spaces []struct {
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
 	
 	// Ensure legend is included - check if legend area extends beyond current bounds
-	legendX := int(float64(scaledWidth) * 0.05)
+	legendXForBounds := int(float64(scaledWidth) * 0.05)
 	legendStartY := int(float64(scaledHeight) - labelReserve*0.5)
 	legendEndY := legendStartY + len(spaces)*int(35*float64(scale))
 	
 	// Expand bounding box to include legend if needed
-	if legendX < minXImg {
-		minXImg = legendX
+	if legendXForBounds < minXImg {
+		minXImg = legendXForBounds
 	}
 	// Estimate legend width (square + text)
 	estimatedLegendWidth := int(20*float64(scale)) + int(10*float64(scale)) + 200*scale // square + spacing + text estimate
-	if legendX+estimatedLegendWidth > maxXImg {
-		maxXImg = legendX + estimatedLegendWidth
+	if legendXForBounds+estimatedLegendWidth > maxXImg {
+		maxXImg = legendXForBounds + estimatedLegendWidth
 	}
 	if legendStartY < minYImg {
 		minYImg = legendStartY
