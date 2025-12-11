@@ -174,11 +174,11 @@ func generateXYZGamutComparison(spaces []struct {
 	// Nord Aurora colors: Red, Orange, Yellow, Green, Purple
 	// These are already in sRGB space (RGB hex values), so we use them directly
 	gamutColors := map[string]color.RGBA{
-		"sRGB":        {191, 97, 106, 200},  // Nord Aurora Red (#BF616A) - sRGB
-		"DisplayP3":   {208, 135, 112, 200}, // Nord Aurora Orange (#D08770) - sRGB
-		"AdobeRGB":    {235, 203, 139, 200}, // Nord Aurora Yellow (#EBCB8B) - sRGB
-		"ProPhotoRGB": {163, 190, 140, 200}, // Nord Aurora Green (#A3BE8C) - sRGB
-		"Rec2020":     {180, 142, 173, 200}, // Nord Aurora Purple (#B48EAD) - sRGB
+		"sRGB":         {191, 97, 106, 255},   // Nord Aurora Red (#BF616A) - sRGB
+		"DisplayP3":    {208, 135, 112, 255},  // Nord Aurora Orange (#D08770) - sRGB
+		"AdobeRGB":     {235, 203, 139, 255},  // Nord Aurora Yellow (#EBCB8B) - sRGB
+		"ProPhotoRGB":  {163, 190, 140, 255},  // Nord Aurora Green (#A3BE8C) - sRGB
+		"Rec2020":      {180, 142, 173, 255},  // Nord Aurora Purple (#B48EAD) - sRGB
 	}
 
 	// Draw each gamut as a wireframe
