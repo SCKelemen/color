@@ -276,3 +276,14 @@ func generateOKLCHSpaceFrame(frame, totalFrames int) *image.RGBA {
 
 	return img
 }
+
+// clamp01 clamps a value to the range [0, 1]
+func clamp01(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	if v > 1 {
+		return 1
+	}
+	return v
+}
