@@ -113,7 +113,10 @@ func generateGamutVolume(createColor func(r, g, b float64) col.Color, spaceName,
 
 	scaleFactor := float64(scaledWidth) * 0.35
 	centerX := float64(scaledWidth) / 2
-	centerY := float64(scaledHeight) / 2
+	// Position gamut higher to leave room for label at bottom
+	// Reserve about 20% of height for label
+	labelReserve := float64(scaledHeight) * 0.20
+	centerY := (float64(scaledHeight) - labelReserve) / 2
 
 	// Sample RGB cube and project to 3D view
 	step := 0.03
@@ -209,47 +212,40 @@ func generateGamutVolume(createColor func(r, g, b float64) col.Color, spaceName,
 
 	// Find bounding box of non-transparent pixels
 	minX, minY, maxX, maxY := findBoundingBox(img)
-	
-	// Add padding for label
-	labelHeight := int(30 * float64(scale))
-	padding := int(10 * float64(scale))
-	
-	// Create cropped image with label space
+
+	// Add padding around gamut and space for label
+	labelHeight := int(40 * float64(scale))
+	padding := int(15 * float64(scale))
+
+	// Create cropped image with label space at bottom
 	croppedWidth := maxX - minX + padding*2
 	croppedHeight := maxY - minY + padding*2 + labelHeight
-	
-	// Adjust bounds to include label
-	if minY > labelHeight {
-		minY -= labelHeight
-	} else {
-		croppedHeight += labelHeight
-		minY = 0
-	}
-	
+
 	croppedImg := image.NewRGBA(image.Rect(0, 0, croppedWidth, croppedHeight))
-	
+
 	// Fill with transparent background
 	for y := 0; y < croppedHeight; y++ {
 		for x := 0; x < croppedWidth; x++ {
 			croppedImg.Set(x, y, color.RGBA{0, 0, 0, 0})
 		}
 	}
-	
-	// Copy gamut image to cropped image
+
+	// Copy gamut image to cropped image (positioned at top, leaving space for label at bottom)
 	for y := minY; y < maxY; y++ {
 		for x := minX; x < maxX; x++ {
 			if x >= 0 && x < scaledWidth && y >= 0 && y < scaledHeight {
 				c := img.RGBAAt(x, y)
 				if c.A > 0 {
-					croppedImg.Set(x-minX+padding, y-minY+padding+labelHeight, c)
+					// Position gamut at top with padding, label will go at bottom
+					croppedImg.Set(x-minX+padding, y-minY+padding, c)
 				}
 			}
 		}
 	}
-	
-	// Draw label
+
+	// Draw label at the bottom
 	drawGamutLabel(croppedImg, croppedWidth, croppedHeight, spaceName, textColor)
-	
+
 	// Scale down to final size
 	return scaleDown(croppedImg, croppedWidth/scale, croppedHeight/scale)
 }
@@ -257,7 +253,7 @@ func generateGamutVolume(createColor func(r, g, b float64) col.Color, spaceName,
 func findBoundingBox(img *image.RGBA) (minX, minY, maxX, maxY int) {
 	minX, minY = img.Bounds().Dx(), img.Bounds().Dy()
 	maxX, maxY = 0, 0
-	
+
 	for y := 0; y < img.Bounds().Dy(); y++ {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			if img.RGBAAt(x, y).A > 0 {
@@ -276,21 +272,35 @@ func findBoundingBox(img *image.RGBA) (minX, minY, maxX, maxY int) {
 			}
 		}
 	}
-	
+
+	// If no pixels found, return default bounds
+	if minX > maxX || minY > maxY {
+		return 0, 0, img.Bounds().Dx(), img.Bounds().Dy()
+	}
+
 	// Add small margin
-	if minX > 0 {
-		minX = max(0, minX-10*scale)
+	margin := 15 * scale
+	if minX > margin {
+		minX = minX - margin
+	} else {
+		minX = 0
 	}
-	if minY > 0 {
-		minY = max(0, minY-10*scale)
+	if minY > margin {
+		minY = minY - margin
+	} else {
+		minY = 0
 	}
-	if maxX < img.Bounds().Dx() {
-		maxX = min(img.Bounds().Dx(), maxX+10*scale)
+	if maxX < img.Bounds().Dx()-margin {
+		maxX = maxX + margin
+	} else {
+		maxX = img.Bounds().Dx()
 	}
-	if maxY < img.Bounds().Dy() {
-		maxY = min(img.Bounds().Dy(), maxY+10*scale)
+	if maxY < img.Bounds().Dy()-margin {
+		maxY = maxY + margin
+	} else {
+		maxY = img.Bounds().Dy()
 	}
-	
+
 	return
 }
 
@@ -310,10 +320,10 @@ func min(a, b int) int {
 
 func scaleDown(img *image.RGBA, targetWidth, targetHeight int) *image.RGBA {
 	result := image.NewRGBA(image.Rect(0, 0, targetWidth, targetHeight))
-	
+
 	scaleX := float64(img.Bounds().Dx()) / float64(targetWidth)
 	scaleY := float64(img.Bounds().Dy()) / float64(targetHeight)
-	
+
 	for y := 0; y < targetHeight; y++ {
 		for x := 0; x < targetWidth; x++ {
 			srcX := int(float64(x) * scaleX)
@@ -323,14 +333,14 @@ func scaleDown(img *image.RGBA, targetWidth, targetHeight int) *image.RGBA {
 			}
 		}
 	}
-	
+
 	return result
 }
 
 func drawGamutLabel(img *image.RGBA, width, height int, spaceName, textColor string) {
 	// Center the label text
 	text := strings.ToUpper(spaceName)
-	
+
 	// Determine primary and shadow colors
 	primaryColor := textColor
 	var shadowColor string
@@ -339,9 +349,11 @@ func drawGamutLabel(img *image.RGBA, width, height int, spaceName, textColor str
 	} else {
 		shadowColor = ""
 	}
-	
-	// Position text at the bottom, centered
-	textY := height - int(10*float64(scale))
+
+	// Position text at the bottom, centered vertically in the label area
+	// Label area is roughly the bottom 40px (scaled), center text in that area
+	labelAreaHeight := int(40 * float64(scale))
+	textY := height - labelAreaHeight/2
 	drawTextScaled(img, width/2, textY, text, primaryColor, shadowColor, true, scale)
 }
 
@@ -350,12 +362,12 @@ func drawTextScaled(img *image.RGBA, x, y int, text, primaryColor, shadowColor s
 	if primaryColor == "white" {
 		textCol = color.RGBA{255, 255, 255, 255}
 	}
-	
+
 	shadowCol := color.RGBA{0, 0, 0, 255}
 	if shadowColor == "white" {
 		shadowCol = color.RGBA{255, 255, 255, 255}
 	}
-	
+
 	if defaultTT != nil {
 		scaledFace, err := opentype.NewFace(defaultTT, &opentype.FaceOptions{
 			Size:    fontSize * float64(scale),
@@ -367,12 +379,12 @@ func drawTextScaled(img *image.RGBA, x, y int, text, primaryColor, shadowColor s
 			if center {
 				x = x - textWidth.Ceil()/2
 			}
-			
+
 			point := fixed.Point26_6{
 				X: fixed.Int26_6(x * 64),
 				Y: fixed.Int26_6(y * 64),
 			}
-			
+
 			// Draw shadow first if needed
 			if shadowColor != "" {
 				shadowPoint := fixed.Point26_6{
@@ -387,7 +399,7 @@ func drawTextScaled(img *image.RGBA, x, y int, text, primaryColor, shadowColor s
 				}
 				d.DrawString(text)
 			}
-			
+
 			// Draw primary text
 			d := &font.Drawer{
 				Dst:  img,
@@ -399,22 +411,22 @@ func drawTextScaled(img *image.RGBA, x, y int, text, primaryColor, shadowColor s
 			return
 		}
 	}
-	
+
 	// Fallback to basicfont
 	face := basicfont.Face7x13
 	fontScale := float64(fontSize) / 13.0
 	textWidth := int(float64(len(text)*7) * fontScale)
-	
+
 	if center {
 		x = x - (textWidth*scale)/2
 	}
-	
+
 	tempImg := image.NewRGBA(image.Rect(0, 0, textWidth+2, int(13*fontScale)+2))
 	point := fixed.Point26_6{
 		X: fixed.Int26_6(1 * 64),
 		Y: fixed.Int26_6(int(13*fontScale) * 64),
 	}
-	
+
 	d := &font.Drawer{
 		Dst:  tempImg,
 		Src:  image.NewUniform(textCol),
@@ -422,7 +434,7 @@ func drawTextScaled(img *image.RGBA, x, y int, text, primaryColor, shadowColor s
 		Dot:  point,
 	}
 	d.DrawString(text)
-	
+
 	for ty := 0; ty < tempImg.Bounds().Dy(); ty++ {
 		for tx := 0; tx < tempImg.Bounds().Dx(); tx++ {
 			c := tempImg.RGBAAt(tx, ty)
