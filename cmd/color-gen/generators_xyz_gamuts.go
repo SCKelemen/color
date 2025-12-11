@@ -172,19 +172,22 @@ func generateXYZGamutComparison(spaces []struct {
 
 	// Color coding for each gamut using Nord color palette
 	// Nord Aurora colors: Red, Orange, Yellow, Green, Purple
+	// These are already in sRGB space (RGB hex values), so we use them directly
 	gamutColors := map[string]color.RGBA{
-		"sRGB":         {191, 97, 106, 200},   // Nord Aurora Red (#BF616A)
-		"DisplayP3":    {208, 135, 112, 200},  // Nord Aurora Orange (#D08770)
-		"AdobeRGB":     {235, 203, 139, 200},  // Nord Aurora Yellow (#EBCB8B)
-		"ProPhotoRGB":  {163, 190, 140, 200},  // Nord Aurora Green (#A3BE8C)
-		"Rec2020":      {180, 142, 173, 200},  // Nord Aurora Purple (#B48EAD)
+		"sRGB":         {191, 97, 106, 200},   // Nord Aurora Red (#BF616A) - sRGB
+		"DisplayP3":    {208, 135, 112, 200},  // Nord Aurora Orange (#D08770) - sRGB
+		"AdobeRGB":     {235, 203, 139, 200},  // Nord Aurora Yellow (#EBCB8B) - sRGB
+		"ProPhotoRGB":  {163, 190, 140, 200},  // Nord Aurora Green (#A3BE8C) - sRGB
+		"Rec2020":      {180, 142, 173, 200},  // Nord Aurora Purple (#B48EAD) - sRGB
 	}
 
 	// Draw each gamut as a wireframe
 	for _, space := range spaces {
-		gamutColor := gamutColors[space.colorName]
-		if gamutColor.A == 0 {
-			gamutColor = color.RGBA{200, 200, 200, 200} // Default gray
+		gamutColor, exists := gamutColors[space.colorName]
+		if !exists || gamutColor.A == 0 {
+			// Fallback to gray if color not found
+			gamutColor = color.RGBA{200, 200, 200, 200}
+			fmt.Printf("WARNING: No color found for %s (colorName: %s)\n", space.name, space.colorName)
 		}
 
 		// Sample RGB cube edges and corners
@@ -285,20 +288,21 @@ func generateXYZGamutComparison(spaces []struct {
 	}
 
 	// Draw axes - use normalized coordinates
+	// All colors must be in sRGB space for PNG/GIF rendering
 	axisLength := maxRange * 0.3 * uniformScale
-	// X axis (red)
+	// X axis (red) - sRGB
 	xNorm := axisLength
 	yNorm := 0.0
 	zNorm := 0.0
 	xRot, yRot, zRot := rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
 	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{255, 100, 100, 255}, 3)
-	// Y axis (green)
+	// Y axis (green) - sRGB
 	xNorm = 0.0
 	yNorm = axisLength
 	zNorm = 0.0
 	xRot, yRot, zRot = rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
 	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{100, 255, 100, 255}, 3)
-	// Z axis (blue)
+	// Z axis (blue) - sRGB
 	xNorm = 0.0
 	yNorm = 0.0
 	zNorm = axisLength
