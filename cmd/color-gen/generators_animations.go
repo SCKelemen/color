@@ -186,21 +186,43 @@ func generateLABSpaceFrame(frame, totalFrames int) *image.RGBA {
 		for b := -80.0; b <= 80.0; b += step {
 			// Convert LAB to RGB
 			lab := col.NewLAB(l, a, b, 1.0)
-			r, g, b, _ := lab.RGBA()
+			// Convert to XYZ first to check if in gamut
+			xyz := col.ToXYZ(lab)
+			// Convert XYZ to linear RGB
+			linearR := xyz.X*3.2404542 - xyz.Y*1.5371385 - xyz.Z*0.4985314
+			linearG := -xyz.X*0.9692660 + xyz.Y*1.8760108 + xyz.Z*0.0415560
+			linearB := xyz.X*0.0556434 - xyz.Y*0.2040259 + xyz.Z*1.0572252
+			
+			// Only draw if color is within sRGB gamut (linear RGB in [0, 1])
+			if linearR >= 0 && linearR <= 1 && linearG >= 0 && linearG <= 1 && linearB >= 0 && linearB <= 1 {
+				// Apply gamma correction (sRGB transfer function)
+				var r, g, bVal float64
+				if linearR <= 0.0031308 {
+					r = 12.92 * linearR
+				} else {
+					r = 1.055*math.Pow(linearR, 1.0/2.4) - 0.055
+				}
+				if linearG <= 0.0031308 {
+					g = 12.92 * linearG
+				} else {
+					g = 1.055*math.Pow(linearG, 1.0/2.4) - 0.055
+				}
+				if linearB <= 0.0031308 {
+					bVal = 12.92 * linearB
+				} else {
+					bVal = 1.055*math.Pow(linearB, 1.0/2.4) - 0.055
+				}
 
-			// Rotate coordinates
-			x := a / 100.0
-			y := b / 100.0
-			rotX := x*math.Cos(angle) - y*math.Sin(angle)
-			rotY := x*math.Sin(angle) + y*math.Cos(angle)
+				// Rotate coordinates
+				x := a / 100.0
+				y := b / 100.0
+				rotX := x*math.Cos(angle) - y*math.Sin(angle)
+				rotY := x*math.Sin(angle) + y*math.Cos(angle)
 
-			px := int(centerX + rotX*scale)
-			py := int(centerY - rotY*scale)
+				px := int(centerX + rotX*scale)
+				py := int(centerY - rotY*scale)
 
-			if px >= 0 && px < width && py >= 0 && py < height {
-				// Only draw if color is valid and within sRGB gamut
-				// RGBA() already returns clamped [0, 1] values in sRGB space
-				if r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+				if px >= 0 && px < width && py >= 0 && py < height {
 					// Convert normalized [0, 1] to uint8 [0, 255]
 					img.Set(px, py, color.RGBA{
 						uint8(r * 255),
@@ -242,19 +264,50 @@ func generateOKLCHSpaceFrame(frame, totalFrames int) *image.RGBA {
 	l := 0.5
 	for c := 0.0; c <= 0.3; c += 0.003 {
 		for h := 0.0; h < 360.0; h += 0.5 {
-			oklch := col.NewOKLCH(l, c, h, 1.0)
-			r, g, b, _ := oklch.RGBA()
+			// Convert OKLCH to OKLAB (polar to rectangular)
+			rad := h * math.Pi / 180
+			oka := c * math.Cos(rad)
+			okb := c * math.Sin(rad)
+			oklab := col.NewOKLAB(l, oka, okb, 1.0)
+			// Convert OKLAB to linear RGB
+			l_ := oklab.L + 0.3963377774*oklab.A + 0.2158037573*oklab.B
+			m := oklab.L - 0.1055613458*oklab.A - 0.0638541728*oklab.B
+			s := oklab.L - 0.0894841775*oklab.A - 1.2914855480*oklab.B
 
-			// Only draw if color is valid and within sRGB gamut
-			if r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1 {
+			l3 := l_ * l_ * l_
+			m3 := m * m * m
+			s3 := s * s * s
+
+			linearR := +4.0767416621*l3 - 3.3077115913*m3 + 0.2309699292*s3
+			linearG := -1.2684380046*l3 + 2.6097574011*m3 - 0.3413193965*s3
+			linearB := -0.0041960863*l3 - 0.7034186147*m3 + 1.7076147010*s3
+
+			// Only draw if color is within sRGB gamut (linear RGB in [0, 1])
+			if linearR >= 0 && linearR <= 1 && linearG >= 0 && linearG <= 1 && linearB >= 0 && linearB <= 1 {
+				// Apply gamma correction (sRGB transfer function)
+				var r, g, b float64
+				if linearR <= 0.0031308 {
+					r = 12.92 * linearR
+				} else {
+					r = 1.055*math.Pow(linearR, 1.0/2.4) - 0.055
+				}
+				if linearG <= 0.0031308 {
+					g = 12.92 * linearG
+				} else {
+					g = 1.055*math.Pow(linearG, 1.0/2.4) - 0.055
+				}
+				if linearB <= 0.0031308 {
+					b = 12.92 * linearB
+				} else {
+					b = 1.055*math.Pow(linearB, 1.0/2.4) - 0.055
+				}
+
 				// Convert polar to Cartesian with rotation
 				hueAngle := h*math.Pi/180.0 + angle
 				px := int(centerX + c*maxRadius*math.Cos(hueAngle))
 				py := int(centerY - c*maxRadius*math.Sin(hueAngle))
 
 				if px >= 0 && px < width && py >= 0 && py < height {
-					// Only draw if color is valid and within sRGB gamut
-					// RGBA() already returns clamped [0, 1] values in sRGB space
 					// Convert normalized [0, 1] to uint8 [0, 255]
 					img.Set(px, py, color.RGBA{
 						uint8(r * 255),
