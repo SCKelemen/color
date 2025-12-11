@@ -185,9 +185,8 @@ func generateXYZGamutComparison(spaces []struct {
 	for _, space := range spaces {
 		gamutColor, exists := gamutColors[space.colorName]
 		if !exists || gamutColor.A == 0 {
-			// Fallback to gray if color not found
+			// Fallback to gray if color not found (sRGB gray)
 			gamutColor = color.RGBA{200, 200, 200, 200}
-			fmt.Printf("WARNING: No color found for %s (colorName: %s)\n", space.name, space.colorName)
 		}
 
 		// Sample RGB cube edges and corners
@@ -402,8 +401,9 @@ func generateXYZGamutComparison(spaces []struct {
 		space := spaces[itemIndex]
 		itemIndex++
 
-		gamutColor := gamutColors[space.colorName]
-		if gamutColor.A == 0 {
+		gamutColor, exists := gamutColors[space.colorName]
+		if !exists || gamutColor.A == 0 {
+			// Fallback to gray if color not found (sRGB gray)
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
 
