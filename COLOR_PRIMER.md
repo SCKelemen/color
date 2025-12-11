@@ -135,8 +135,6 @@ The following images demonstrate how the same color stops (red to blue) appear w
   <img alt="Gradient Color Stops"                  src="docs/gradients/stops_white.png">
 </picture>  
 
-*Start (red) and end (blue) color stops with hex codes*
-
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_rgb_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_rgb_black.png">
