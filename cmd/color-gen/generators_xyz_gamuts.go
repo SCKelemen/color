@@ -170,13 +170,14 @@ func generateXYZGamutComparison(spaces []struct {
 	labelReserve := float64(scaledHeight) * 0.15
 	centerY := (float64(scaledHeight) - labelReserve) / 2
 
-	// Color coding for each gamut
+	// Color coding for each gamut using Nord color palette
+	// Nord Aurora colors: Red, Orange, Yellow, Green, Purple
 	gamutColors := map[string]color.RGBA{
-		"sRGB":        {255, 0, 0, 200},   // Red
-		"DisplayP3":   {0, 255, 0, 200},   // Green
-		"AdobeRGB":    {0, 0, 255, 200},   // Blue
-		"ProPhotoRGB": {255, 255, 0, 200}, // Yellow
-		"Rec2020":     {255, 0, 255, 200}, // Magenta
+		"sRGB":         {191, 97, 106, 200},   // Nord Aurora Red (#BF616A)
+		"DisplayP3":    {163, 190, 140, 200},  // Nord Aurora Green (#A3BE8C)
+		"AdobeRGB":     {136, 192, 208, 200},  // Nord Frost Blue (#88C0D0)
+		"ProPhotoRGB":  {235, 203, 139, 200},  // Nord Aurora Yellow (#EBCB8B)
+		"Rec2020":      {180, 142, 173, 200},  // Nord Aurora Purple (#B48EAD)
 	}
 
 	// Draw each gamut as a wireframe
