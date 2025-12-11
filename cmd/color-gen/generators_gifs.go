@@ -192,8 +192,8 @@ func createGlobalPalette(frames []image.Image) color.Palette {
 		}
 	}
 	
-	// Convert map to slice
-	allColors := make([]color.RGBA, 0, len(colorMap))
+	// Convert map to slice of Color interface
+	allColors := make([]color.Color, 0, len(colorMap))
 	for _, c := range colorMap {
 		allColors = append(allColors, c)
 	}
