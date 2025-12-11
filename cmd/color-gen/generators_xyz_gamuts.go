@@ -351,17 +351,25 @@ func generateXYZGamutComparison(spaces []struct {
 	}
 	
 	// Use layout library to create a vertical stack for the legend
+	// Important: Set MinHeight explicitly for VStack items to prevent collapsing
 	legendItems := make([]*layout.Node, len(spaces))
+	itemSpacing := float64(15 * scale)
+	
 	for i := range spaces {
-		legendItems[i] = layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
+		// Create fixed-size item with explicit MinHeight
+		item := layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
+		// Ensure MinHeight is set (Fixed should set Height, but set MinHeight too for safety)
+		item.Style.MinHeight = float64(itemHeight)
+		
+		// Add top padding/spacing to all items except the first
+		if i > 0 {
+			item = layout.PaddingCustom(item, itemSpacing, 0, 0, 0) // top padding only
+		}
+		
+		legendItems[i] = item
 	}
+	
 	legendStack := layout.VStack(legendItems...)
-	// Add spacing between items using padding on each item (except first)
-	for i := 1; i < len(legendItems); i++ {
-		legendItems[i] = layout.Padding(legendItems[i], float64(15*scale))
-	}
-	// Recreate stack with updated items
-	legendStack = layout.VStack(legendItems...)
 	
 	// Layout the legend to get its actual size
 	legendConstraints := layout.Loose(float64(scaledWidth), float64(scaledHeight))
