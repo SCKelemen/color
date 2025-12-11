@@ -36,13 +36,6 @@ func generateXYZGamuts() error {
 			name:      "Display P3",
 			colorName: "DisplayP3",
 			convert: func(r, g, b float64) *col.XYZ {
-				// Convert Display P3 RGB directly to XYZ
-				// Use ConvertFromRGBSpace which converts to XYZ internally, then extract XYZ
-				c, _ := col.ConvertFromRGBSpace(r, g, b, 1.0, "display-p3")
-				// Convert back to XYZ - but wait, ConvertFromRGBSpace already did this conversion
-				// We need to access the XYZ directly. Let's use the RGBColorSpace method.
-				// Actually, we can use ConvertFromRGBSpace which internally converts RGB->XYZ->sRGB
-				// So we need to go the other way. Let's manually do the conversion.
 				return convertRGBSpaceToXYZ(r, g, b, "display-p3")
 			},
 		},
@@ -236,9 +229,15 @@ func generateXYZGamutComparison(spaces []struct {
 			for g := 0.0; g <= 1.0; g += step {
 				for b := 0.0; b <= 1.0; b += step {
 					xyz := space.convert(r, g, b)
-					xRot, yRot, zRot := rotate3D(xyz.X, xyz.Y, xyz.Z, angleY, angleX, angleZ)
-					px := int(centerX + (xRot-minX)*scaleX)
-					py := int(centerY - (yRot-minY)*scaleY - (zRot-minZ)*scaleZ)
+					// First scale to normalized coordinates centered at origin
+					xNorm := (xyz.X - (minX+maxX)/2) * uniformScale
+					yNorm := (xyz.Y - (minY+maxY)/2) * uniformScale
+					zNorm := (xyz.Z - (minZ+maxZ)/2) * uniformScale
+					// Then apply 3D rotation
+					xRot, yRot, zRot := rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
+					// Project to 2D (isometric)
+					px := int(centerX + xRot)
+					py := int(centerY - yRot - zRot*0.5)
 
 					if px >= 0 && px < scaledWidth && py >= 0 && py < scaledHeight {
 						// Draw a larger point for better visibility
@@ -271,11 +270,26 @@ func generateXYZGamutComparison(spaces []struct {
 		}
 	}
 
-	// Draw axes
-	axisLength := math.Max(rangeX, math.Max(rangeY, rangeZ)) * 0.3
-	drawAxis3D(img, centerX, centerY, axisLength, angleY, angleX, angleZ, 1, 0, 0, color.RGBA{255, 100, 100, 255}, "X")
-	drawAxis3D(img, centerX, centerY, axisLength, angleY, angleX, angleZ, 0, 1, 0, color.RGBA{100, 255, 100, 255}, "Y")
-	drawAxis3D(img, centerX, centerY, axisLength, angleY, angleX, angleZ, 0, 0, 1, color.RGBA{100, 100, 255, 255}, "Z")
+	// Draw axes - use normalized coordinates
+	axisLength := maxRange * 0.3 * uniformScale
+	// X axis (red)
+	xNorm := axisLength
+	yNorm := 0.0
+	zNorm := 0.0
+	xRot, yRot, zRot := rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
+	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{255, 100, 100, 255}, 3)
+	// Y axis (green)
+	xNorm = 0.0
+	yNorm = axisLength
+	zNorm = 0.0
+	xRot, yRot, zRot = rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
+	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{100, 255, 100, 255}, 3)
+	// Z axis (blue)
+	xNorm = 0.0
+	yNorm = 0.0
+	zNorm = axisLength
+	xRot, yRot, zRot = rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
+	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{100, 100, 255, 255}, 3)
 
 	// Draw legend
 	legendY := int(float64(scaledHeight) - labelReserve*0.3)
