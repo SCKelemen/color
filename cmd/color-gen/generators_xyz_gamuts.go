@@ -228,8 +228,8 @@ func generateXYZGamutComparison(spaces []struct {
 		for _, edge := range edges {
 			p1 := projected[edge[0]]
 			p2 := projected[edge[1]]
-			// Draw thicker lines for better visibility
-			drawLine(img, int(p1.x), int(p1.y), int(p2.x), int(p2.y), gamutColor, 3)
+			// Draw much thicker lines for better visibility
+			drawLine(img, int(p1.x), int(p1.y), int(p2.x), int(p2.y), gamutColor, 5)
 		}
 
 		// Draw filled volume by sampling more densely
@@ -300,9 +300,10 @@ func generateXYZGamutComparison(spaces []struct {
 	xRot, yRot, zRot = rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
 	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{100, 100, 255, 255}, 3)
 
-	// Draw legend
-	legendY := int(float64(scaledHeight) - labelReserve*0.3)
+	// Draw legend - position it higher to avoid being cut off
+	legendY := int(float64(scaledHeight) - labelReserve*0.5)
 	legendX := int(float64(scaledWidth) * 0.05)
+	legendSpacing := int(35 * float64(scale)) // Increased spacing between legend items
 
 	for i, space := range spaces {
 		gamutColor := gamutColors[space.colorName]
@@ -312,10 +313,11 @@ func generateXYZGamutComparison(spaces []struct {
 
 		// Draw color square
 		squareSize := int(20 * float64(scale))
+		squareY := legendY + i*legendSpacing
 		for y := 0; y < squareSize; y++ {
 			for x := 0; x < squareSize; x++ {
 				px := legendX + x
-				py := legendY + y + i*int(30*float64(scale))
+				py := squareY + y
 				if px >= 0 && px < scaledWidth && py >= 0 && py < scaledHeight {
 					img.Set(px, py, gamutColor)
 				}
@@ -324,7 +326,7 @@ func generateXYZGamutComparison(spaces []struct {
 
 		// Draw label
 		labelX := legendX + squareSize + int(10*float64(scale))
-		labelY := legendY + squareSize/2 + i*int(30*float64(scale))
+		labelY := squareY + squareSize/2
 		var shadowColor string
 		if textColor == "white" {
 			shadowColor = "black"
@@ -341,7 +343,30 @@ func generateXYZGamutComparison(spaces []struct {
 	drawTextScaled(img, scaledWidth/2, titleY, "RGB Gamuts in XYZ Color Space", textColor, shadowColor, true, scale)
 
 	// Find bounding box and crop
+	// Make sure to include the legend area in the bounding box
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
+	
+	// Ensure legend is included - check if legend area extends beyond current bounds
+	legendX := int(float64(scaledWidth) * 0.05)
+	legendStartY := int(float64(scaledHeight) - labelReserve*0.5)
+	legendEndY := legendStartY + len(spaces)*int(35*float64(scale))
+	
+	// Expand bounding box to include legend if needed
+	if legendX < minXImg {
+		minXImg = legendX
+	}
+	// Estimate legend width (square + text)
+	estimatedLegendWidth := int(20*float64(scale)) + int(10*float64(scale)) + 200*scale // square + spacing + text estimate
+	if legendX+estimatedLegendWidth > maxXImg {
+		maxXImg = legendX + estimatedLegendWidth
+	}
+	if legendStartY < minYImg {
+		minYImg = legendStartY
+	}
+	if legendEndY > maxYImg {
+		maxYImg = legendEndY
+	}
+	
 	imgPadding := 20 * scale
 	croppedWidth := (maxXImg - minXImg) + (imgPadding * 2)
 	croppedHeight := (maxYImg - minYImg) + (imgPadding * 2)
