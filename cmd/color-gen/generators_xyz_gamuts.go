@@ -174,11 +174,11 @@ func generateXYZGamutComparison(spaces []struct {
 	// Nord Aurora colors: Red, Orange, Yellow, Green, Purple
 	// These are already in sRGB space (RGB hex values), so we use them directly
 	gamutColors := map[string]color.RGBA{
-		"sRGB":         {191, 97, 106, 200},   // Nord Aurora Red (#BF616A) - sRGB
-		"DisplayP3":    {208, 135, 112, 200},  // Nord Aurora Orange (#D08770) - sRGB
-		"AdobeRGB":     {235, 203, 139, 200},  // Nord Aurora Yellow (#EBCB8B) - sRGB
-		"ProPhotoRGB":  {163, 190, 140, 200},  // Nord Aurora Green (#A3BE8C) - sRGB
-		"Rec2020":      {180, 142, 173, 200},  // Nord Aurora Purple (#B48EAD) - sRGB
+		"sRGB":        {191, 97, 106, 200},  // Nord Aurora Red (#BF616A) - sRGB
+		"DisplayP3":   {208, 135, 112, 200}, // Nord Aurora Orange (#D08770) - sRGB
+		"AdobeRGB":    {235, 203, 139, 200}, // Nord Aurora Yellow (#EBCB8B) - sRGB
+		"ProPhotoRGB": {163, 190, 140, 200}, // Nord Aurora Green (#A3BE8C) - sRGB
+		"Rec2020":     {180, 142, 173, 200}, // Nord Aurora Purple (#B48EAD) - sRGB
 	}
 
 	// Draw each gamut as a wireframe
@@ -263,19 +263,9 @@ func generateXYZGamutComparison(spaces []struct {
 								if dx*dx+dy*dy <= pointSize*pointSize {
 									nx, ny := px+dx, py+dy
 									if nx >= 0 && nx < scaledWidth && ny >= 0 && ny < scaledHeight {
-										// Blend with existing color for transparency effect
-										existing := img.RGBAAt(nx, ny)
-										if existing.A == 0 {
-											img.Set(nx, ny, gamutColor)
-										} else {
-											// Blend colors
-											alpha := float64(gamutColor.A) / 255.0
-											r := uint8(float64(existing.R)*(1-alpha) + float64(gamutColor.R)*alpha)
-											g := uint8(float64(existing.G)*(1-alpha) + float64(gamutColor.G)*alpha)
-											b := uint8(float64(existing.B)*(1-alpha) + float64(gamutColor.B)*alpha)
-											a := uint8(math.Max(float64(existing.A), float64(gamutColor.A)))
-											img.Set(nx, ny, color.RGBA{r, g, b, a})
-										}
+										// Set color directly - no blending needed since we use full opacity
+										// All colors are in sRGB space
+										img.Set(nx, ny, gamutColor)
 									}
 								}
 							}
