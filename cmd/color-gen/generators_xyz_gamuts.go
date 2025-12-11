@@ -306,8 +306,8 @@ func generateXYZGamutComparison(spaces []struct {
 	// Find bounding box and crop
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
 	padding := 20 * scale
-	croppedWidth := (maxXImg - minXImg) + padding*2
-	croppedHeight := (maxYImg - minYImg) + padding*2
+	croppedWidth := (maxXImg - minXImg) + (padding * 2)
+	croppedHeight := (maxYImg - minYImg) + (padding * 2)
 
 	croppedImg := image.NewRGBA(image.Rect(0, 0, croppedWidth, croppedHeight))
 	for y := 0; y < croppedHeight; y++ {
