@@ -90,23 +90,39 @@ Chromaticity diagrams show the color gamut of each RGB color space projected ont
 The following images show the 3D volume of each color space's gamut in an isometric projection. Each gamut represents the complete range of colors that can be represented in that space. Images are provided in both light and dark mode variants for responsive documentation.
 
 #### sRGB Gamut
-![sRGB Gamut (Light Mode)](docs/gamuts/gamut_sRGB_black.png)
-![sRGB Gamut (Dark Mode)](docs/gamuts/gamut_sRGB_white.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/gamuts/gamut_sRGB_white.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/gamuts/gamut_sRGB_black.png">
+  <img alt="sRGB Color Gamut"                      src="docs/gamuts/gamut_sRGB_white.png">
+</picture>  
+
 *sRGB gamut - the standard web color space*
 
 #### Display P3 Gamut
-![Display P3 Gamut (Light Mode)](docs/gamuts/gamut_DisplayP3_black.png)
-![Display P3 Gamut (Dark Mode)](docs/gamuts/gamut_DisplayP3_white.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/gamuts/gamut_DisplayP3_white.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/gamuts/gamut_DisplayP3_black.png">
+  <img alt="Display P3 Color Gamut"                src="docs/gamuts/gamut_DisplayP3_white.png">
+</picture>  
+
 *Display P3 gamut - wider than sRGB, especially in greens and reds*
 
 #### Adobe RGB Gamut
-![Adobe RGB Gamut (Light Mode)](docs/gamuts/gamut_AdobeRGB_black.png)
-![Adobe RGB Gamut (Dark Mode)](docs/gamuts/gamut_AdobeRGB_white.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/gamuts/gamut_AdobeRGB_white.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/gamuts/gamut_AdobeRGB_black.png">
+  <img alt="Adobe RGB Color Gamut"                 src="docs/gamuts/gamut_AdobeRGB_white.png">
+</picture>  
+
 *Adobe RGB gamut - wider than sRGB, particularly in cyan-green*
 
 #### Rec. 2020 Gamut
-![Rec. 2020 Gamut (Light Mode)](docs/gamuts/gamut_Rec2020_black.png)
-![Rec. 2020 Gamut (Dark Mode)](docs/gamuts/gamut_Rec2020_white.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/gamuts/gamut_Rec2020_white.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/gamuts/gamut_Rec2020_black.png">
+  <img alt="Rec. 2020 Color Gamut"                 src="docs/gamuts/gamut_Rec2020_white.png">
+</picture>  
+
 *Rec. 2020 gamut - very wide, designed for future display technologies*
 
 ### Color Model Visualizations
@@ -129,11 +145,6 @@ The following diagrams illustrate how different color models represent the color
 
 The following images demonstrate how the same color stops (red to blue) appear when interpolated in different color spaces. Notice how RGB and HSL produce less uniform transitions, while OKLCH produces the smoothest, most perceptually uniform gradient.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/stops_white.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/gradients/stops_black.png">
-  <img alt="Gradient Color Stops"                  src="docs/gradients/stops_white.png">
-</picture>  
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_rgb_white.png">
