@@ -147,20 +147,21 @@ func findNearestColorInPalette(c color.Color, palette color.Palette) color.Color
 }
 
 // createGlobalPalette creates a color palette from all frames
-// Uses a simple but effective approach: sample colors from all frames
+// Uses a better approach: collect all unique colors first, then select the best 256
 func createGlobalPalette(frames []image.Image) color.Palette {
-	palette := make(color.Palette, 0, 256)
-	colorMap := make(map[uint32]bool) // Track unique colors
-	
 	// Add transparent color first
-	palette = append(palette, color.RGBA{0, 0, 0, 0})
+	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
 	
-	// Sample colors from all frames
-	step := 2 // Sample every 2nd pixel for better coverage
+	// Collect all unique colors from all frames
+	colorMap := make(map[uint32]color.RGBA)
+	
+	// Sample colors from all frames more evenly
+	// Use a larger step to sample more frames before hitting the limit
+	step := 4
 	for _, img := range frames {
 		bounds := img.Bounds()
-		for y := bounds.Min.Y; y < bounds.Max.Y && len(palette) < 256; y += step {
-			for x := bounds.Min.X; x < bounds.Max.X && len(palette) < 256; x += step {
+		for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
+			for x := bounds.Min.X; x < bounds.Max.X; x += step {
 				c := img.At(x, y)
 				r, g, b, a := c.RGBA()
 				
@@ -169,55 +170,44 @@ func createGlobalPalette(frames []image.Image) color.Palette {
 					continue
 				}
 				
-				// Quantize to reduce similar colors (reduce to 5 bits per channel)
-				// This helps group similar colors together
-				rq := (r >> 11) << 11
-				gq := (g >> 11) << 11
-				bq := (b >> 11) << 11
-				aq := a
+				// Quantize to reduce similar colors (reduce to 6 bits per channel for better coverage)
+				// This helps group similar colors together while preserving more variety
+				rq := (r >> 10) << 10
+				gq := (g >> 10) << 10
+				bq := (b >> 10) << 10
 				
 				// Create a key for this quantized color
-				key := uint32(rq>>8)<<24 | uint32(gq>>8)<<16 | uint32(bq>>8)<<8 | uint32(aq>>8)
+				key := uint32(rq>>8)<<24 | uint32(gq>>8)<<16 | uint32(bq>>8)<<8 | 255
 				
-				if !colorMap[key] {
-					colorMap[key] = true
-					palette = append(palette, color.RGBA{
+				// Store the actual color (not quantized) for better quality
+				if _, exists := colorMap[key]; !exists {
+					colorMap[key] = color.RGBA{
 						R: uint8(r >> 8),
 						G: uint8(g >> 8),
 						B: uint8(b >> 8),
 						A: uint8(a >> 8),
-					})
+					}
 				}
 			}
 		}
 	}
 	
-	// If we don't have enough colors, add some common colors for better coverage
-	if len(palette) < 256 {
-		// Add some vibrant colors that might be missing
-		vibrantColors := []color.Color{
-			color.RGBA{255, 0, 0, 255},   // Red
-			color.RGBA{0, 255, 0, 255},   // Green
-			color.RGBA{0, 0, 255, 255},   // Blue
-			color.RGBA{255, 255, 0, 255}, // Yellow
-			color.RGBA{255, 0, 255, 255}, // Magenta
-			color.RGBA{0, 255, 255, 255}, // Cyan
-			color.RGBA{255, 128, 0, 255}, // Orange
-			color.RGBA{128, 0, 255, 255}, // Purple
-		}
-		
-		for _, vc := range vibrantColors {
-			if len(palette) >= 256 {
-				break
-			}
-			r, g, b, _ := vc.RGBA()
-			key := uint32(r>>8)<<24 | uint32(g>>8)<<16 | uint32(b>>8)<<8 | 255
-			if !colorMap[key] {
-				colorMap[key] = true
-				palette = append(palette, vc)
-			}
-		}
+	// Convert map to slice
+	allColors := make([]color.RGBA, 0, len(colorMap))
+	for _, c := range colorMap {
+		allColors = append(allColors, c)
 	}
+	
+	// If we have more than 255 colors, we need to select the best ones
+	// Use a simple approach: sort by frequency or use a more sophisticated method
+	if len(allColors) > 255 {
+		// For now, just take the first 255 unique colors
+		// In the future, we could use median cut or k-means clustering
+		allColors = allColors[:255]
+	}
+	
+	// Add all collected colors to palette
+	palette = append(palette, allColors...)
 	
 	// Pad to 256 colors if needed (use last color or transparent)
 	var lastColor color.Color = color.RGBA{0, 0, 0, 0}

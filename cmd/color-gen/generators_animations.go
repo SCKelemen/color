@@ -192,7 +192,7 @@ func generateLABSpaceFrame(frame, totalFrames int) *image.RGBA {
 			linearR := xyz.X*3.2404542 - xyz.Y*1.5371385 - xyz.Z*0.4985314
 			linearG := -xyz.X*0.9692660 + xyz.Y*1.8760108 + xyz.Z*0.0415560
 			linearB := xyz.X*0.0556434 - xyz.Y*0.2040259 + xyz.Z*1.0572252
-			
+
 			// Only draw if color is within sRGB gamut (linear RGB in [0, 1])
 			if linearR >= 0 && linearR <= 1 && linearG >= 0 && linearG <= 1 && linearB >= 0 && linearB <= 1 {
 				// Apply gamma correction (sRGB transfer function)
