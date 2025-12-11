@@ -250,16 +250,16 @@ func generateOKLCHSpaceFrame(frame, totalFrames int) *image.RGBA {
 				py := int(centerY - c*maxRadius*math.Sin(hueAngle))
 
 				if px >= 0 && px < width && py >= 0 && py < height {
-				// Ensure values are in [0, 1] range and convert to uint8
-				r8 := clamp01(r) * 255
-				g8 := clamp01(g) * 255
-				b8 := clamp01(b) * 255
-				img.Set(px, py, color.RGBA{
-					uint8(r8),
-					uint8(g8),
-					uint8(b8),
-					255,
-				})
+					// Ensure values are in [0, 1] range and convert to uint8
+					r8 := clamp01(r) * 255
+					g8 := clamp01(g) * 255
+					b8 := clamp01(b) * 255
+					img.Set(px, py, color.RGBA{
+						uint8(r8),
+						uint8(g8),
+						uint8(b8),
+						255,
+					})
 				}
 			}
 		}

@@ -86,6 +86,14 @@ func main() {
 		}(),
 
 		func() *clix.Command {
+			cmd := clix.NewCommand("xyz-gamuts", clix.WithCommandShort("Generate comparison of all RGB gamuts in XYZ color space"))
+			cmd.Run = func(ctx *clix.Context) error {
+				return generateXYZGamuts()
+			}
+			return cmd
+		}(),
+
+		func() *clix.Command {
 			cmd := clix.NewCommand("chromaticity", clix.WithCommandShort("Generate CIE xy chromaticity diagrams for different RGB color spaces"))
 			cmd.Run = func(ctx *clix.Context) error {
 				return generateChromaticity()
