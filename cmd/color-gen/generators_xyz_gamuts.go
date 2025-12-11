@@ -351,12 +351,15 @@ func generateXYZGamutComparison(spaces []struct {
 	legendStartY := int(float64(scaledHeight) - labelReserve*0.5)
 	legendEndY := legendStartY + len(spaces)*int(35*float64(scale))
 	
+	// Estimate legend width (square + spacing + text)
+	// Text width estimate: longest name is "ProPhoto RGB" which is about 13 chars * 10px = 130px at scale
+	estimatedTextWidth := 200 * scale // Conservative estimate for longest text
+	estimatedLegendWidth := int(20*float64(scale)) + int(10*float64(scale)) + int(estimatedTextWidth)
+	
 	// Expand bounding box to include legend if needed
 	if legendXForBounds < minXImg {
 		minXImg = legendXForBounds
 	}
-	// Estimate legend width (square + text)
-	estimatedLegendWidth := int(20*float64(scale)) + int(10*float64(scale)) + 200*scale // square + spacing + text estimate
 	if legendXForBounds+estimatedLegendWidth > maxXImg {
 		maxXImg = legendXForBounds + estimatedLegendWidth
 	}
@@ -367,7 +370,8 @@ func generateXYZGamutComparison(spaces []struct {
 		maxYImg = legendEndY
 	}
 	
-	imgPadding := 20 * scale
+	// Use larger padding to ensure nothing gets cut off
+	imgPadding := 40 * scale
 	croppedWidth := (maxXImg - minXImg) + (imgPadding * 2)
 	croppedHeight := (maxYImg - minYImg) + (imgPadding * 2)
 
