@@ -129,62 +129,67 @@ The following diagrams illustrate how different color models represent the color
 
 The following images demonstrate how the same color stops (red to blue) appear when interpolated in different color spaces. Notice how RGB and HSL produce less uniform transitions, while OKLCH produces the smoothest, most perceptually uniform gradient.
 
-#### RGB Interpolation
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/stops_white.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/gradients/stops_black.png">
+  <img alt="Gradient Color Stops"                  src="docs/gradients/stops_white.png">
+</picture>  
+
+*Start (red) and end (blue) color stops with hex codes*
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_rgb_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_rgb_black.png">
   <img alt="RGB Gradient"                          src="docs/gradients/gradient_rgb_white.png">
 </picture>  
+
 *RGB interpolation - notice the "muddy" middle section and uneven transitions*
 
-#### HSL Interpolation
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_hsl_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_hsl_black.png">
   <img alt="HSL Gradient"                          src="docs/gradients/gradient_hsl_white.png">
 </picture>  
+
 *HSL interpolation - hue-based, but lightness may feel uneven*
 
-#### LAB Interpolation
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_lab_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_lab_black.png">
   <img alt="LAB Gradient"                          src="docs/gradients/gradient_lab_white.png">
 </picture>  
+
 *LAB interpolation - more perceptually uniform than RGB/HSL*
 
-#### OKLAB Interpolation
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_oklab_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_oklab_black.png">
   <img alt="OKLAB Gradient"                        src="docs/gradients/gradient_oklab_white.png">
 </picture>  
+
 *OKLAB interpolation - modern, perceptually uniform space*
 
-#### LCH Interpolation
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_lch_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_lch_black.png">
   <img alt="LCH Gradient"                          src="docs/gradients/gradient_lch_white.png">
 </picture>  
+
 *LCH interpolation - cylindrical representation of LAB*
 
-#### OKLCH Interpolation (Recommended)
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/gradients/gradient_oklch_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/gradients/gradient_oklch_black.png">
   <img alt="OKLCH Gradient"                        src="docs/gradients/gradient_oklch_white.png">
 </picture>  
+
 *OKLCH interpolation - **recommended** for perceptually uniform gradients*
 
-### Color Stops
-
-The color stops images show the start and end colors used in all gradient examples, aligned to match the gradient bar width (830px). Images are provided in both light and dark mode variants for responsive documentation.
-
-![Color Stops (Light Mode)](docs/gradients/stops_black.png)
-![Color Stops (Dark Mode)](docs/gradients/stops_white.png)
-*Start (red) and end (blue) color stops with hex codes*
 
 ### Generated Assets
 

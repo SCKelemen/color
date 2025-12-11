@@ -72,11 +72,11 @@ func main() {
 			}
 		}
 
-		// Draw start square at 0px
-		drawRoundedSquareAA(img, 0, padding*scale, stopHeight*scale, start, textColor, scale)
+		// Draw start square at 0px with text to the right
+		drawRoundedSquareAA(img, 0, padding*scale, stopHeight*scale, start, textColor, scale, true)
 
-		// Draw end square ending at 830px (so it starts at 830 - stopHeight)
-		drawRoundedSquareAA(img, (gradientWidth-stopHeight)*scale, padding*scale, stopHeight*scale, end, textColor, scale)
+		// Draw end square ending at 830px (so it starts at 830 - stopHeight) with text to the left
+		drawRoundedSquareAA(img, (gradientWidth-stopHeight)*scale, padding*scale, stopHeight*scale, end, textColor, scale, false)
 
 		// Scale down to final size
 		finalImg := scaleDown(img, gradientWidth, stopHeight+padding*2)
@@ -101,7 +101,7 @@ func main() {
 	}
 }
 
-func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, textColor string, scale int) {
+func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, textColor string, scale int, textOnRight bool) {
 	r, g, b, _ := c.RGBA()
 	cr := uint8(clamp255(r * 255))
 	cg := uint8(clamp255(g * 255))
@@ -126,7 +126,7 @@ func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, textColor
 		}
 	}
 
-	// Draw color code text
+	// Draw color code text inline (to the right or left of square)
 	hex := col.RGBToHex(c)
 	// Determine primary and shadow colors
 	primaryColor := textColor
@@ -136,12 +136,55 @@ func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, textColor
 	} else {
 		shadowColor = "" // No shadow for black text
 	}
-	
-	textY := y + size + 15*scale
-	if shadowColor != "" {
-		drawTextScaled(img, x+size/2+scale, textY+scale, hex, shadowColor, true, scale) // shadow first
+
+	// Calculate text width and metrics to position it properly
+	var textWidth int
+	var textY int
+	var scaledFace font.Face
+
+	if defaultTT != nil {
+		var err error
+		scaledFace, err = opentype.NewFace(defaultTT, &opentype.FaceOptions{
+			Size:    fontSize * float64(scale),
+			DPI:     72,
+			Hinting: font.HintingFull,
+		})
+		if err == nil {
+			textWidth = font.MeasureString(scaledFace, hex).Ceil()
+			// Get font metrics to center text vertically
+			metrics := scaledFace.Metrics()
+			// Font height is Ascent + Descent
+			fontHeight := metrics.Height.Ceil()
+			// Baseline offset: we want the center of the font to align with center of square
+			// The Y coordinate is the baseline, so we need to move it up by half the font height
+			// and then down by the descent to center it
+			baselineOffset := metrics.Ascent.Ceil() - fontHeight/2
+			textY = y + size/2 + baselineOffset
+		} else {
+			textWidth = len(hex) * 7 * scale
+			textY = y + size/2
+		}
+	} else {
+		textWidth = len(hex) * 7 * scale
+		// For basicfont, approximate centering
+		textY = y + size/2 + 4*scale // Approximate baseline offset
 	}
-	drawTextScaled(img, x+size/2, textY, hex, primaryColor, true, scale) // primary text on top
+
+	// Position text to the right or left of square
+	textSpacing := 10 * scale // Space between square and text
+	var textX int
+	if textOnRight {
+		// Text to the right of square
+		textX = x + size + textSpacing
+	} else {
+		// Text to the left of square
+		textX = x - textSpacing - textWidth
+	}
+
+	if shadowColor != "" {
+		drawTextScaledWithFace(img, textX+scale, textY+scale, hex, shadowColor, false, scale, scaledFace) // shadow first
+	}
+	drawTextScaledWithFace(img, textX, textY, hex, primaryColor, false, scale, scaledFace) // primary text on top
 }
 
 func getRoundedRectAlpha(x, y, w, h, r int) uint8 {
@@ -190,9 +233,36 @@ func getRoundedRectAlpha(x, y, w, h, r int) uint8 {
 }
 
 func drawTextScaled(img *image.RGBA, x, y int, text, textColor string, center bool, scale int) {
+	drawTextScaledWithFace(img, x, y, text, textColor, center, scale, nil)
+}
+
+func drawTextScaledWithFace(img *image.RGBA, x, y int, text, textColor string, center bool, scale int, face font.Face) {
 	textCol := color.RGBA{0, 0, 0, 255}
 	if textColor == "white" {
 		textCol = color.RGBA{255, 255, 255, 255}
+	}
+
+	if face != nil {
+		// Use provided face
+		textWidth := font.MeasureString(face, text)
+		if center {
+			x = x - textWidth.Ceil()/2
+		}
+
+		// Draw text directly at high resolution
+		point := fixed.Point26_6{
+			X: fixed.Int26_6(x * 64),
+			Y: fixed.Int26_6(y * 64),
+		}
+
+		d := &font.Drawer{
+			Dst:  img,
+			Src:  image.NewUniform(textCol),
+			Face: face,
+			Dot:  point,
+		}
+		d.DrawString(text)
+		return
 	}
 
 	if defaultTT != nil {
@@ -227,7 +297,7 @@ func drawTextScaled(img *image.RGBA, x, y int, text, textColor string, center bo
 	}
 
 	// Fallback to basicfont
-	face := basicfont.Face7x13
+	basicFace := basicfont.Face7x13
 	fontScale := float64(fontSize) / 13.0
 	textWidth := int(float64(len(text)*7) * fontScale)
 
@@ -245,7 +315,7 @@ func drawTextScaled(img *image.RGBA, x, y int, text, textColor string, center bo
 	d := &font.Drawer{
 		Dst:  tempImg,
 		Src:  image.NewUniform(textCol),
-		Face: face,
+		Face: basicFace,
 		Dot:  point,
 	}
 	d.DrawString(text)
