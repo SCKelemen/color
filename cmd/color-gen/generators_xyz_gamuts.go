@@ -9,7 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
+
 	col "github.com/SCKelemen/color"
+	"github.com/SCKelemen/layout"
 )
 
 func generateXYZGamuts() error {
@@ -300,20 +304,87 @@ func generateXYZGamutComparison(spaces []struct {
 	xRot, yRot, zRot = rotate3D(xNorm, yNorm, zNorm, angleY, angleX, angleZ)
 	drawLine(img, int(centerX), int(centerY), int(centerX+xRot), int(centerY-yRot-zRot*0.5), color.RGBA{100, 100, 255, 255}, 3)
 
-	// Draw legend - position it higher to avoid being cut off
-	legendY := int(float64(scaledHeight) - labelReserve*0.5)
-	legendX := int(float64(scaledWidth) * 0.05)
-	legendSpacing := int(35 * float64(scale)) // Increased spacing between legend items
-
+	// Use layout library to properly calculate legend dimensions
+	// First, measure all text widths accurately
+	squareSize := int(20 * float64(scale))
+	spacing := int(10 * float64(scale))
+	maxTextWidth := 0
+	
+	// Create a font face for accurate text measurement
+	var scaledFace font.Face
+	if defaultTT != nil {
+		var err error
+		scaledFace, err = opentype.NewFace(defaultTT, &opentype.FaceOptions{
+			Size:    fontSize * float64(scale),
+			DPI:     72,
+			Hinting: font.HintingFull,
+		})
+		if err == nil {
+			// Measure actual text widths
+			for _, space := range spaces {
+				textWidth := font.MeasureString(scaledFace, space.name).Ceil()
+				if textWidth > maxTextWidth {
+					maxTextWidth = textWidth
+				}
+			}
+		}
+	}
+	
+	// Fallback if font measurement failed
+	if maxTextWidth == 0 {
+		for _, space := range spaces {
+			textWidth := len(space.name) * 10 * scale
+			if textWidth > maxTextWidth {
+				maxTextWidth = textWidth
+			}
+		}
+	}
+	
+	// Calculate legend item height (square size or text height, whichever is larger)
+	itemHeight := squareSize
+	if scaledFace != nil {
+		metrics := scaledFace.Metrics()
+		fontHeight := metrics.Height.Ceil()
+		if fontHeight > itemHeight {
+			itemHeight = fontHeight
+		}
+	}
+	
+	// Use layout library to create a vertical stack for the legend
+	legendItems := make([]*layout.Node, len(spaces))
+	for i := range spaces {
+		legendItems[i] = layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
+	}
+	legendStack := layout.VStack(legendItems...)
+	// Add spacing between items using padding on each item (except first)
+	for i := 1; i < len(legendItems); i++ {
+		legendItems[i] = layout.Padding(legendItems[i], float64(15*scale))
+	}
+	// Recreate stack with updated items
+	legendStack = layout.VStack(legendItems...)
+	
+	// Layout the legend to get its actual size
+	legendConstraints := layout.Loose(float64(scaledWidth), float64(scaledHeight))
+	legendSize := layout.Layout(legendStack, legendConstraints)
+	
+	// Position legend in bottom left with proper margins
+	legendX := int(50 * float64(scale)) // Margin from left
+	legendY := int(float64(scaledHeight) - labelReserve*0.5 - legendSize.Height)
+	
+	// Draw legend items
 	for i, space := range spaces {
 		gamutColor := gamutColors[space.colorName]
 		if gamutColor.A == 0 {
 			gamutColor = color.RGBA{200, 200, 200, 255}
 		}
-
+		
+		// Get item position from layout using GetFinalRect
+		itemNode := legendItems[i]
+		itemRect := layout.GetFinalRect(itemNode)
+		itemY := legendY + int(itemRect.Y)
+		
 		// Draw color square
-		squareSize := int(20 * float64(scale))
-		squareY := legendY + i*legendSpacing
+		squareY := itemY + (itemHeight-squareSize)/2 // Center square vertically
 		for y := 0; y < squareSize; y++ {
 			for x := 0; x < squareSize; x++ {
 				px := legendX + x
@@ -323,10 +394,10 @@ func generateXYZGamutComparison(spaces []struct {
 				}
 			}
 		}
-
+		
 		// Draw label
-		labelX := legendX + squareSize + int(10*float64(scale))
-		labelY := squareY + squareSize/2
+		labelX := legendX + squareSize + spacing
+		labelY := itemY + itemHeight/2 // Center text vertically
 		var shadowColor string
 		if textColor == "white" {
 			shadowColor = "black"
@@ -346,30 +417,18 @@ func generateXYZGamutComparison(spaces []struct {
 	// Make sure to include the legend area in the bounding box
 	minXImg, minYImg, maxXImg, maxYImg := findBoundingBox(img)
 	
-	// Ensure legend is included - check if legend area extends beyond current bounds
-	legendXForBounds := int(float64(scaledWidth) * 0.05)
-	legendStartY := int(float64(scaledHeight) - labelReserve*0.5)
-	legendEndY := legendStartY + len(spaces)*int(35*float64(scale))
-	
-	// Calculate actual maximum text width by checking all space names
-	maxTextWidth := 0
-	for _, space := range spaces {
-		// Estimate text width: roughly 10px per character at 16pt with 3x scale
-		textWidth := len(space.name) * 10 * scale
-		if textWidth > maxTextWidth {
-			maxTextWidth = textWidth
-		}
-	}
-	
-	// Estimate legend width (square + spacing + text)
-	estimatedLegendWidth := int(20*float64(scale)) + int(10*float64(scale)) + maxTextWidth + (20 * scale) // Extra margin
+	// Use layout library to calculate exact legend bounds
+	legendXForBounds := legendX
+	legendWidth := int(legendSize.Width)
+	legendStartY := legendY
+	legendEndY := legendY + int(legendSize.Height)
 	
 	// Expand bounding box to include legend if needed
 	if legendXForBounds < minXImg {
 		minXImg = legendXForBounds
 	}
-	if legendXForBounds+estimatedLegendWidth > maxXImg {
-		maxXImg = legendXForBounds + estimatedLegendWidth
+	if legendXForBounds+legendWidth > maxXImg {
+		maxXImg = legendXForBounds + legendWidth
 	}
 	if legendStartY < minYImg {
 		minYImg = legendStartY

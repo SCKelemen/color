@@ -1,5 +1,7 @@
 github.com/SCKelemen/clix v0.2.0 h1:Dxhksqh/6bSWxyZJEjnERMBtj5Px0raKkeYLSBgRQLM=
 github.com/SCKelemen/clix v0.2.0/go.mod h1:5cgTkW/1mQswBkaKNOd5E+7wTgP9U4rc6+xOGfqK59s=
+github.com/SCKelemen/layout v1.0.0 h1:7fpHLrPuq5puZ4jh0gzuefW/4dNzzh68UcwmqWhHB8Y=
+github.com/SCKelemen/layout v1.0.0/go.mod h1:HPh0Lq5Kf2ll+HGpP3RbE6ZtRA+0ZIwcvHXiQsvN8TU=
 golang.org/x/image v0.34.0 h1:33gCkyw9hmwbZJeZkct8XyR11yH889EQt/QH4VmXMn8=
 golang.org/x/image v0.34.0/go.mod h1:2RNFBZRB+vnwwFil8GkMdRvrJOFd1AzdZI6vOY+eJVU=
 golang.org/x/text v0.32.0 h1:ZD01bjUt1FQ9WJ0ClOL5vxgxOI/sVCNgX1YtKwcY0mU=
