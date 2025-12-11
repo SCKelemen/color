@@ -371,7 +371,7 @@ func generateXYZGamutComparison(spaces []struct {
 	legendX := int(50 * float64(scale)) // Margin from left
 	legendY := int(float64(scaledHeight) - labelReserve*0.5 - legendSize.Height)
 	
-	// Draw legend items
+	// Draw legend items - use the layout-calculated positions
 	for i, space := range spaces {
 		gamutColor := gamutColors[space.colorName]
 		if gamutColor.A == 0 {
@@ -381,6 +381,7 @@ func generateXYZGamutComparison(spaces []struct {
 		// Get item position from layout using GetFinalRect
 		itemNode := legendItems[i]
 		itemRect := layout.GetFinalRect(itemNode)
+		// Position relative to the legend stack's position
 		itemY := legendY + int(itemRect.Y)
 		
 		// Draw color square
