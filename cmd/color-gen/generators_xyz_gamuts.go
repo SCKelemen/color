@@ -359,8 +359,10 @@ func generateXYZGamutComparison(spaces []struct {
 	for i := range spaces {
 		// Add spacer before each item except the first
 		if i > 0 {
-			spacer := layout.Fixed(1, itemSpacing) // Fixed height spacer
+			// Create a fixed-height spacer node
+			spacer := layout.Fixed(0, itemSpacing) // Zero width, fixed height
 			spacer.Style.MinHeight = itemSpacing
+			spacer.Style.Height = itemSpacing
 			legendChildren = append(legendChildren, spacer)
 		}
 		
@@ -385,9 +387,9 @@ func generateXYZGamutComparison(spaces []struct {
 	// Draw legend items - use the layout-calculated positions
 	// Note: legendChildren includes spacers, so we need to track which nodes are actual items
 	itemIndex := 0
-	for i, child := range legendChildren {
-		// Skip spacer nodes (they have width 1)
-		if child.Style.Width == 1 && child.Style.Height == itemSpacing {
+	for _, child := range legendChildren {
+		// Skip spacer nodes (they have width 0 and height equal to itemSpacing)
+		if child.Style.Width == 0 && child.Style.Height == itemSpacing {
 			continue
 		}
 		
