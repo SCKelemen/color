@@ -180,9 +180,10 @@ The following images demonstrate how the same color stops (red to blue) appear w
 
 ### Color Stops
 
-The color stops image shows the start and end colors used in all gradient examples, aligned to match the gradient bar width (830px).
+The color stops images show the start and end colors used in all gradient examples, aligned to match the gradient bar width (830px). Images are provided in both light and dark mode variants for responsive documentation.
 
-![Color Stops](docs/gradients/stops.png)
+![Color Stops (Light Mode)](docs/gradients/stops_black.png)
+![Color Stops (Dark Mode)](docs/gradients/stops_white.png)
 *Start (red) and end (blue) color stops with hex codes*
 
 ### Generated Assets
@@ -191,7 +192,7 @@ All visualizations are generated programmatically:
 - `docs/chromaticity/`: CIE xy chromaticity diagrams for sRGB, Display P3, Adobe RGB, Rec. 2020 (via `cmd/generate_chromaticity`)
 - `docs/gamuts/`: Isometric 3D volume visualizations for sRGB, Display P3, Adobe RGB, Rec. 2020 with labels, in both light and dark mode variants (via `cmd/generate_gamuts`)
 - `docs/gradients/`: Gradient strips in RGB, HSL, Lab, OKLab, LCH, OKLCH with transparent backgrounds and dual-text labels (via `cmd/generate_gradients`)
-- `docs/gradients/stops.png`: Color stop squares aligned to gradient width (via `cmd/generate_stops`)
+- `docs/gradients/stops_black.png` and `stops_white.png`: Color stop squares aligned to gradient width with black and white text variants (via `cmd/generate_stops`)
 - `docs/models/`: Color model visualizations showing RGB cube, HSL cylinder, LAB space, and OKLCH space (via `cmd/generate_models`)
 
 ## Key takeaways

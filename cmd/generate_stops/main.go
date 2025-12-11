@@ -12,6 +12,7 @@ import (
 	col "github.com/SCKelemen/color"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -20,8 +21,34 @@ const (
 	gradientHeight = 50
 	cornerRadius   = 8
 	padding        = 20
-	scale          = 3 // Render at 3x for better quality
+	scale          = 3  // Render at 3x for better quality
+	fontSize       = 16 // Font size in points
 )
+
+var defaultTT *opentype.Font
+
+func init() {
+	// Try to load Roboto font
+	robotoFonts := []string{
+		"fonts/Roboto/static/Roboto-Regular.ttf",
+		"fonts/Roboto/static/Roboto-Medium.ttf",
+		"fonts/Roboto/Roboto-VariableFont_wdth,wght.ttf",
+		"fonts/Roboto/Roboto-Regular.ttf",
+	}
+
+	for _, fontPath := range robotoFonts {
+		if _, err := os.Stat(fontPath); err == nil {
+			fontData, err := os.ReadFile(fontPath)
+			if err == nil {
+				tt, err := opentype.Parse(fontData)
+				if err == nil {
+					defaultTT = tt
+					return
+				}
+			}
+		}
+	}
+}
 
 func main() {
 	stopHeight := 33 // 2/3 of bar height (50 * 2/3 = ~33px)
@@ -31,41 +58,50 @@ func main() {
 	start := col.RGB(1, 0, 0) // red
 	end := col.RGB(0, 0, 1)   // blue
 
-	// Create image at higher resolution
-	scaledWidth := gradientWidth * scale
-	scaledHeight := (stopHeight + padding*2) * scale
-	img := image.NewRGBA(image.Rect(0, 0, scaledWidth, scaledHeight))
+	// Generate both black and white text versions
+	for _, textColor := range []string{"black", "white"} {
+		// Create image at higher resolution
+		scaledWidth := gradientWidth * scale
+		scaledHeight := (stopHeight + padding*2) * scale
+		img := image.NewRGBA(image.Rect(0, 0, scaledWidth, scaledHeight))
 
-	// Fill with transparent background
-	for y := 0; y < scaledHeight; y++ {
-		for x := 0; x < scaledWidth; x++ {
-			img.Set(x, y, color.RGBA{0, 0, 0, 0})
+		// Fill with transparent background
+		for y := 0; y < scaledHeight; y++ {
+			for x := 0; x < scaledWidth; x++ {
+				img.Set(x, y, color.RGBA{0, 0, 0, 0})
+			}
 		}
+
+		// Draw start square at 0px
+		drawRoundedSquareAA(img, 0, padding*scale, stopHeight*scale, start, textColor, scale)
+
+		// Draw end square ending at 830px (so it starts at 830 - stopHeight)
+		drawRoundedSquareAA(img, (gradientWidth-stopHeight)*scale, padding*scale, stopHeight*scale, end, textColor, scale)
+
+		// Scale down to final size
+		finalImg := scaleDown(img, gradientWidth, stopHeight+padding*2)
+
+		// Save
+		suffix := ""
+		if textColor == "black" {
+			suffix = "_black"
+		} else {
+			suffix = "_white"
+		}
+		filename := filepath.Join(outputDir, fmt.Sprintf("stops%s.png", suffix))
+		f, err := os.Create(filename)
+		if err != nil {
+			panic(err)
+		}
+		if err := png.Encode(f, finalImg); err != nil {
+			panic(err)
+		}
+		f.Close()
+		fmt.Printf("Generated %s\n", filename)
 	}
-
-	// Draw start square at 0px
-	drawRoundedSquareAA(img, 0, padding*scale, stopHeight*scale, start, scale)
-
-	// Draw end square ending at 830px (so it starts at 830 - stopHeight)
-	drawRoundedSquareAA(img, (gradientWidth-stopHeight)*scale, padding*scale, stopHeight*scale, end, scale)
-
-	// Scale down to final size
-	finalImg := scaleDown(img, gradientWidth, stopHeight+padding*2)
-
-	// Save
-	filename := filepath.Join(outputDir, "stops.png")
-	f, err := os.Create(filename)
-	if err != nil {
-		panic(err)
-	}
-	if err := png.Encode(f, finalImg); err != nil {
-		panic(err)
-	}
-	f.Close()
-	fmt.Printf("Generated %s\n", filename)
 }
 
-func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, scale int) {
+func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, textColor string, scale int) {
 	r, g, b, _ := c.RGBA()
 	cr := uint8(clamp255(r * 255))
 	cg := uint8(clamp255(g * 255))
@@ -90,10 +126,22 @@ func drawRoundedSquareAA(img *image.RGBA, x, y, size int, c col.Color, scale int
 		}
 	}
 
-	// Draw color code text (both black and white for visibility)
+	// Draw color code text
 	hex := col.RGBToHex(c)
-	drawTextScaled(img, x+size/2, y+size+15*scale, hex, "black", true, scale)             // center aligned, black
-	drawTextScaled(img, x+size/2+scale, y+size+15*scale+scale, hex, "white", true, scale) // center aligned, white shadow
+	// Determine primary and shadow colors
+	primaryColor := textColor
+	var shadowColor string
+	if textColor == "white" {
+		shadowColor = "black"
+	} else {
+		shadowColor = "" // No shadow for black text
+	}
+	
+	textY := y + size + 15*scale
+	if shadowColor != "" {
+		drawTextScaled(img, x+size/2+scale, textY+scale, hex, shadowColor, true, scale) // shadow first
+	}
+	drawTextScaled(img, x+size/2, textY, hex, primaryColor, true, scale) // primary text on top
 }
 
 func getRoundedRectAlpha(x, y, w, h, r int) uint8 {
@@ -142,24 +190,56 @@ func getRoundedRectAlpha(x, y, w, h, r int) uint8 {
 }
 
 func drawTextScaled(img *image.RGBA, x, y int, text, textColor string, center bool, scale int) {
-	face := basicfont.Face7x13
 	textCol := color.RGBA{0, 0, 0, 255}
 	if textColor == "white" {
 		textCol = color.RGBA{255, 255, 255, 255}
 	}
 
-	// Calculate text width at base resolution
-	textWidth := len(text) * 7
+	if defaultTT != nil {
+		// Create a scaled font face for high-res rendering
+		scaledFace, err := opentype.NewFace(defaultTT, &opentype.FaceOptions{
+			Size:    fontSize * float64(scale),
+			DPI:     72,
+			Hinting: font.HintingFull,
+		})
+		if err == nil {
+			// Measure text width for centering
+			textWidth := font.MeasureString(scaledFace, text)
+			if center {
+				x = x - textWidth.Ceil()/2
+			}
+
+			// Draw text directly at high resolution
+			point := fixed.Point26_6{
+				X: fixed.Int26_6(x * 64),
+				Y: fixed.Int26_6(y * 64),
+			}
+
+			d := &font.Drawer{
+				Dst:  img,
+				Src:  image.NewUniform(textCol),
+				Face: scaledFace,
+				Dot:  point,
+			}
+			d.DrawString(text)
+			return
+		}
+	}
+
+	// Fallback to basicfont
+	face := basicfont.Face7x13
+	fontScale := float64(fontSize) / 13.0
+	textWidth := int(float64(len(text)*7) * fontScale)
+
 	if center {
 		x = x - (textWidth*scale)/2
 	}
 
 	// Draw text scaled up by drawing at higher resolution
-	// Create a temporary image for the text at base resolution
-	tempImg := image.NewRGBA(image.Rect(0, 0, textWidth+2, 13+2))
+	tempImg := image.NewRGBA(image.Rect(0, 0, textWidth+2, int(13*fontScale)+2))
 	point := fixed.Point26_6{
 		X: fixed.Int26_6(1 * 64),
-		Y: fixed.Int26_6(13 * 64),
+		Y: fixed.Int26_6(int(13*fontScale) * 64),
 	}
 
 	d := &font.Drawer{
@@ -175,7 +255,6 @@ func drawTextScaled(img *image.RGBA, x, y int, text, textColor string, center bo
 		for tx := 0; tx < tempImg.Bounds().Dx(); tx++ {
 			c := tempImg.RGBAAt(tx, ty)
 			if c.A > 0 {
-				// Draw this pixel scaled up
 				for sy := 0; sy < scale; sy++ {
 					for sx := 0; sx < scale; sx++ {
 						dstX := x + tx*scale + sx
