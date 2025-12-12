@@ -146,25 +146,256 @@ func findNearestColorInPalette(c color.Color, palette color.Palette) color.Color
 	return bestColor
 }
 
-// createGlobalPalette creates an evenly distributed palette across the RGB gamut
-// Since these are color space visualizations, we generate a uniform grid in RGB space
+// createGlobalPalette creates a palette using median cut algorithm
+// This ensures good color distribution across the actual colors in the frames
 func createGlobalPalette(frames []image.Image) color.Palette {
 	// Add transparent color first
 	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
 	
-	// Generate evenly distributed colors across RGB gamut
-	// We want 255 colors, so we'll use a 6x6x7 grid (252 colors) + 3 extra
-	// This gives us good coverage of the RGB cube
+	// Collect all colors from frames (sample every pixel for accuracy)
+	allColors := make([]color.RGBA, 0)
+	step := 2 // Sample every 2nd pixel for speed
 	
-	// Create a uniform grid in RGB space
-	// Using 6 levels for R and G, 7 for B to get close to 255
+	for _, img := range frames {
+		bounds := img.Bounds()
+		for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
+			for x := bounds.Min.X; x < bounds.Max.X; x += step {
+				c := img.At(x, y)
+				r, g, b, a := c.RGBA()
+				
+				// Skip fully transparent pixels
+				if a == 0 {
+					continue
+				}
+				
+				allColors = append(allColors, color.RGBA{
+					R: uint8(r >> 8),
+					G: uint8(g >> 8),
+					B: uint8(b >> 8),
+					A: uint8(a >> 8),
+				})
+			}
+		}
+	}
+	
+	if len(allColors) == 0 {
+		// Fallback: uniform grid
+		return createUniformPalette()
+	}
+	
+	// Use median cut to select 255 colors
+	selectedColors := medianCut(allColors, 255)
+	
+	// Add selected colors to palette
+	for _, c := range selectedColors {
+		palette = append(palette, c)
+	}
+	
+	// Pad to 256 colors if needed
+	var lastColor color.Color = color.RGBA{0, 0, 0, 0}
+	if len(palette) > 1 {
+		lastColor = palette[len(palette)-1]
+	}
+	for len(palette) < 256 {
+		palette = append(palette, lastColor)
+	}
+	
+	return palette
+}
+
+// medianCut implements the median cut algorithm to select representative colors
+func medianCut(colors []color.RGBA, targetCount int) []color.RGBA {
+	if len(colors) <= targetCount {
+		return colors
+	}
+	
+	// Start with one box containing all colors
+	boxes := []*colorBox{{colors: colors}}
+	
+	// Split boxes until we have enough
+	for len(boxes) < targetCount && len(boxes) > 0 {
+		// Find the box with the largest range
+		largestIdx := 0
+		largestRange := 0.0
+		
+		for i, box := range boxes {
+			range_ := box.range_()
+			if range_ > largestRange {
+				largestRange = range_
+				largestIdx = i
+			}
+		}
+		
+		// Split the largest box
+		box := boxes[largestIdx]
+		left, right := box.split()
+		
+		// Replace the box with its two halves
+		boxes = append(boxes[:largestIdx], boxes[largestIdx+1:]...)
+		boxes = append(boxes, left, right)
+	}
+	
+	// Get the average color from each box
+	result := make([]color.RGBA, 0, len(boxes))
+	for _, box := range boxes {
+		result = append(result, box.average())
+	}
+	
+	return result
+}
+
+type colorBox struct {
+	colors []color.RGBA
+}
+
+func (b *colorBox) range_() float64 {
+	if len(b.colors) == 0 {
+		return 0
+	}
+	
+	minR, maxR := 255, 0
+	minG, maxG := 255, 0
+	minB, maxB := 255, 0
+	
+	for _, c := range b.colors {
+		if int(c.R) < minR {
+			minR = int(c.R)
+		}
+		if int(c.R) > maxR {
+			maxR = int(c.R)
+		}
+		if int(c.G) < minG {
+			minG = int(c.G)
+		}
+		if int(c.G) > maxG {
+			maxG = int(c.G)
+		}
+		if int(c.B) < minB {
+			minB = int(c.B)
+		}
+		if int(c.B) > maxB {
+			maxB = int(c.B)
+		}
+	}
+	
+	// Return the range of the channel with the largest range
+	rangeR := float64(maxR - minR)
+	rangeG := float64(maxG - minG)
+	rangeB := float64(maxB - minB)
+	
+	if rangeR >= rangeG && rangeR >= rangeB {
+		return rangeR
+	}
+	if rangeG >= rangeB {
+		return rangeG
+	}
+	return rangeB
+}
+
+func (b *colorBox) split() (*colorBox, *colorBox) {
+	if len(b.colors) == 0 {
+		return &colorBox{colors: []color.RGBA{}}, &colorBox{colors: []color.RGBA{}}
+	}
+	
+	// Find the channel with the largest range
+	minR, maxR := 255, 0
+	minG, maxG := 255, 0
+	minB, maxB := 255, 0
+	
+	for _, c := range b.colors {
+		if int(c.R) < minR {
+			minR = int(c.R)
+		}
+		if int(c.R) > maxR {
+			maxR = int(c.R)
+		}
+		if int(c.G) < minG {
+			minG = int(c.G)
+		}
+		if int(c.G) > maxG {
+			maxG = int(c.G)
+		}
+		if int(c.B) < minB {
+			minB = int(c.B)
+		}
+		if int(c.B) > maxB {
+			maxB = int(c.B)
+		}
+	}
+	
+	rangeR := maxR - minR
+	rangeG := maxG - minG
+	rangeB := maxB - minB
+	
+	// Sort by the channel with the largest range
+	var sortFunc func(i, j int) bool
+	var medianValue uint8
+	
+	if rangeR >= rangeG && rangeR >= rangeB {
+		// Sort by R
+		sort.Slice(b.colors, func(i, j int) bool {
+			return b.colors[i].R < b.colors[j].R
+		})
+		medianValue = b.colors[len(b.colors)/2].R
+		sortFunc = func(i, j int) bool {
+			return b.colors[i].R < medianValue
+		}
+	} else if rangeG >= rangeB {
+		// Sort by G
+		sort.Slice(b.colors, func(i, j int) bool {
+			return b.colors[i].G < b.colors[j].G
+		})
+		medianValue = b.colors[len(b.colors)/2].G
+		sortFunc = func(i, j int) bool {
+			return b.colors[i].G < medianValue
+		}
+	} else {
+		// Sort by B
+		sort.Slice(b.colors, func(i, j int) bool {
+			return b.colors[i].B < b.colors[j].B
+		})
+		medianValue = b.colors[len(b.colors)/2].B
+		sortFunc = func(i, j int) bool {
+			return b.colors[i].B < medianValue
+		}
+	}
+	
+	// Split at median (colors are already sorted)
+	mid := len(b.colors) / 2
+	left := b.colors[:mid]
+	right := b.colors[mid:]
+	
+	return &colorBox{colors: left}, &colorBox{colors: right}
+}
+
+func (b *colorBox) average() color.RGBA {
+	if len(b.colors) == 0 {
+		return color.RGBA{0, 0, 0, 255}
+	}
+	
+	var sumR, sumG, sumB int
+	for _, c := range b.colors {
+		sumR += int(c.R)
+		sumG += int(c.G)
+		sumB += int(c.B)
+	}
+	
+	return color.RGBA{
+		R: uint8(sumR / len(b.colors)),
+		G: uint8(sumG / len(b.colors)),
+		B: uint8(sumB / len(b.colors)),
+		A: 255,
+	}
+}
+
+// createUniformPalette creates a uniform grid palette as fallback
+func createUniformPalette() color.Palette {
+	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
 	colors := make([]color.Color, 0, 255)
 	
-	// Generate colors on a uniform grid
 	for r := 0; r < 6; r++ {
 		for g := 0; g < 6; g++ {
 			for b := 0; b < 7; b++ {
-				// Map to 0-255 range
 				R := uint8((r * 255) / 5)
 				G := uint8((g * 255) / 5)
 				B := uint8((b * 255) / 6)
@@ -173,24 +404,8 @@ func createGlobalPalette(frames []image.Image) color.Palette {
 		}
 	}
 	
-	// Add a few extra colors to fill to 255 (6*6*7 = 252, need 3 more)
-	// Add some saturated colors that might be missing
-	extraColors := []color.RGBA{
-		{255, 255, 255, 255}, // White
-		{128, 128, 128, 255}, // Gray
-		{0, 0, 0, 255},       // Black (though transparent is already first)
-	}
-	
-	for _, ec := range extraColors {
-		if len(colors) < 255 {
-			colors = append(colors, ec)
-		}
-	}
-	
-	// Add all colors to palette
 	palette = append(palette, colors...)
 	
-	// Pad to 256 colors if needed
 	var lastColor color.Color = color.RGBA{0, 0, 0, 0}
 	if len(palette) > 1 {
 		lastColor = palette[len(palette)-1]
