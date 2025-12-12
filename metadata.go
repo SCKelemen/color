@@ -136,6 +136,72 @@ func getMetadataForSpace(name string) *SpaceMetadata {
 			IsPerceptuallyUniform:     true,
 			IsPolar:                   true,
 		}
+	case "c-log":
+		return &SpaceMetadata{
+			Name:                      "c-log",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.56, // Cinema Gamut is wider than sRGB
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
+	case "s-log3":
+		return &SpaceMetadata{
+			Name:                      "s-log3",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.69, // S-Gamut3 is very wide
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
+	case "v-log":
+		return &SpaceMetadata{
+			Name:                      "v-log",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.58, // V-Gamut is wide
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
+	case "arri-logc":
+		return &SpaceMetadata{
+			Name:                      "arri-logc",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.55, // Arri Wide Gamut
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
+	case "red-log3g10":
+		return &SpaceMetadata{
+			Name:                      "red-log3g10",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.68, // RedWideGamutRGB
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
+	case "bmd-film":
+		return &SpaceMetadata{
+			Name:                      "bmd-film",
+			Family:                    "RGB-LOG",
+			IsRGB:                     true,
+			IsHDR:                     true,
+			WhitePoint:                "D65",
+			GamutVolumeRelativeToSRGB: 1.70, // Wide gamut similar to Rec.2020
+			IsPerceptuallyUniform:     false,
+			IsPolar:                   false,
+		}
 	default:
 		return nil
 	}
