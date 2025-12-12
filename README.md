@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/SCKelemen/color.svg)](https://pkg.go.dev/github.com/SCKelemen/color)
 [![Go Report Card](https://goreportcard.com/badge/github.com/SCKelemen/color)](https://goreportcard.com/report/github.com/SCKelemen/color)
 
-A comprehensive Go library for **perceptually uniform color manipulation** with full support for modern wide-gamut color spaces.
+A comprehensive Go library for **perceptually uniform color manipulation** with full support for modern wide-gamut color spaces and professional LOG formats for cinema cameras.
 
 ## Why This Library?
 
@@ -125,6 +125,23 @@ chroma := MapToGamut(vividColor, GamutPreserveChroma)       // Keep saturation
 best := MapToGamut(vividColor, GamutProject)                // Best quality
 ```
 
+### 🎬 Cinema Camera LOG Support
+
+Professional LOG color spaces for cinema camera workflows with HDR support:
+
+```go
+// Load LOG footage from cinema camera
+slog3 := color.NewSpaceColor(color.SLog3Space,
+    []float64{0.41, 0.39, 0.35}, 1.0)
+
+// Process in HDR workflow
+hdr := slog3.ConvertTo(color.Rec2020Space)      // HDR mastering
+web := slog3.ConvertTo(color.SRGBSpace)         // Web delivery
+
+// Supported: Canon C-Log, Sony S-Log3, Panasonic V-Log,
+//            Arri LogC, Red Log3G10, Blackmagic Film
+```
+
 ## Quick Start
 
 ### Installation
@@ -174,6 +191,28 @@ func main() {
 - **ProPhoto RGB** - RAW photo editing (widest gamut)
 - **Rec.2020** - UHDTV, future displays
 - **Rec.709** - HDTV
+
+### LOG Color Spaces (Cinema Cameras)
+Professional logarithmic color spaces for cinema camera workflows with HDR support:
+
+- **Canon C-Log** - Cinema EOS cameras (C300, C500, etc.) with Cinema Gamut
+- **Sony S-Log3** - Sony cinema cameras (FX6, FX9, Venice, etc.) with S-Gamut3
+- **Panasonic V-Log** - Panasonic cameras (GH5, S1H, EVA1, etc.) with V-Gamut
+- **Arri LogC** - Arri cameras (Alexa, Amira) with Arri Wide Gamut
+- **Red Log3G10** - Red cameras (Komodo, V-Raptor) with RedWideGamutRGB
+- **Blackmagic Film** - Blackmagic cameras (Pocket, URSA) with wide gamut
+
+```go
+// Load S-Log3 footage from Sony camera
+slog3 := color.NewSpaceColor(color.SLog3Space,
+    []float64{0.41, 0.39, 0.35}, 1.0)
+
+// Convert to Rec.2020 for HDR delivery
+hdr := slog3.ConvertTo(color.Rec2020Space)
+
+// Convert to sRGB for web
+web := slog3.ConvertTo(color.SRGBSpace)
+```
 
 ### Perceptually Uniform Spaces
 - **OKLCH** ⭐ - Modern, recommended (cylindrical)
