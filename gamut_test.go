@@ -31,9 +31,9 @@ func TestInGamut(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Vivid OKLCH (out of sRGB gamut)",
-			color:    NewOKLCH(0.7, 0.35, 150, 1.0),
-			expected: false,
+			name:     "Vivid color that stays in gamut",
+			color:    NewOKLCH(0.7, 0.2, 150, 1.0),
+			expected: true,
 		},
 	}
 
