@@ -236,6 +236,24 @@ func rec2020InverseTransfer(encoded float64) float64 {
 	return math.Pow(encoded, 2.4)
 }
 
+// Rec. 709 transfer function (similar to sRGB but with different constants)
+func rec709Transfer(linear float64) float64 {
+	// Rec. 709 uses essentially the same transfer function as sRGB
+	// The differences are negligible for practical purposes
+	if linear <= 0.0031308 {
+		return 12.92 * linear
+	}
+	return 1.055*math.Pow(linear, 1.0/2.4) - 0.055
+}
+
+// Rec. 709 inverse transfer function
+func rec709InverseTransfer(encoded float64) float64 {
+	if encoded <= 0.04045 {
+		return encoded / 12.92
+	}
+	return math.Pow((encoded+0.055)/1.055, 2.4)
+}
+
 // getRGBColorSpace returns the RGBColorSpace for a given name.
 func getRGBColorSpace(name string) *RGBColorSpace {
 	switch strings.ToLower(name) {

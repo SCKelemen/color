@@ -98,8 +98,31 @@ func (c *spaceColor) ConvertTo(target Space) SpaceColor {
 	// Convert through XYZ (the reference space)
 	x, y, z := c.space.ToXYZ(c.values)
 	targetChannels := target.FromXYZ(x, y, z)
-	
+
 	return NewSpaceColor(target, targetChannels, c.alpha)
+}
+
+// ConvertToWithMapping converts this color to a different color space with gamut mapping.
+// Use this when you need control over how out-of-gamut colors are handled.
+func (c *spaceColor) ConvertToWithMapping(target Space, mapping GamutMapping) SpaceColor {
+	// First convert normally
+	converted := c.ConvertTo(target)
+
+	// Check if it's an RGB space and apply gamut mapping if needed
+	if target.Name() == "sRGB" || target.Name() == "sRGB-linear" ||
+		target.Name() == "display-p3" || target.Name() == "a98-rgb" ||
+		target.Name() == "prophoto-rgb" || target.Name() == "rec2020" {
+
+		// Convert to Color and apply gamut mapping
+		mappedColor := MapToGamut(converted, mapping)
+
+		// Convert back to SpaceColor in the target space
+		xyz := ToXYZ(mappedColor)
+		targetChannels := target.FromXYZ(xyz.X, xyz.Y, xyz.Z)
+		return NewSpaceColor(target, targetChannels, c.alpha)
+	}
+
+	return converted
 }
 
 // RGBA implements Color (converts to sRGB RGBA)

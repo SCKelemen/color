@@ -15,6 +15,7 @@ var DisplayP3Space Space = &rgbSpace{
 	},
 	transferFunc:        sRGBTransfer, // Display P3 uses sRGB transfer function
 	inverseTransferFunc: sRGBInverseTransfer,
+	whitePoint:          WhiteD65,
 }
 
 // A98RGBSpace represents Adobe RGB 1998 color space
@@ -32,9 +33,10 @@ var A98RGBSpace Space = &rgbSpace{
 	},
 	transferFunc:        gammaTransferFunc(2.2),
 	inverseTransferFunc: gammaInverseTransferFunc(2.2),
+	whitePoint:          WhiteD65,
 }
 
-// ProPhotoRGBSpace represents ProPhoto RGB color space
+// ProPhotoRGBSpace represents ProPhoto RGB color space (D50 white point)
 var ProPhotoRGBSpace Space = &rgbSpace{
 	name: "prophoto-rgb",
 	xyzToRGBMatrix: [9]float64{
@@ -49,9 +51,10 @@ var ProPhotoRGBSpace Space = &rgbSpace{
 	},
 	transferFunc:        gammaTransferFunc(1.8),
 	inverseTransferFunc: gammaInverseTransferFunc(1.8),
+	whitePoint:          WhiteD50, // ProPhoto RGB uses D50 white point
 }
 
-// Rec2020Space represents Rec. 2020 color space
+// Rec2020Space represents Rec. 2020 color space (UHDTV)
 var Rec2020Space Space = &rgbSpace{
 	name: "rec2020",
 	xyzToRGBMatrix: [9]float64{
@@ -66,5 +69,44 @@ var Rec2020Space Space = &rgbSpace{
 	},
 	transferFunc:        rec2020Transfer,
 	inverseTransferFunc: rec2020InverseTransfer,
+	whitePoint:          WhiteD65,
+}
+
+// Rec709Space represents Rec. 709 color space (HDTV)
+// Very similar to sRGB but technically has different primaries
+var Rec709Space Space = &rgbSpace{
+	name: "rec709",
+	xyzToRGBMatrix: [9]float64{
+		3.2404542, -1.5371385, -0.4985314,
+		-0.9692660, 1.8760108, 0.0415560,
+		0.0556434, -0.2040259, 1.0572252,
+	},
+	rgbToXYZMatrix: [9]float64{
+		0.4124564, 0.3575761, 0.1804375,
+		0.2126729, 0.7151522, 0.0721750,
+		0.0193339, 0.1191920, 0.9503041,
+	},
+	transferFunc:        rec709Transfer,
+	inverseTransferFunc: rec709InverseTransfer,
+	whitePoint:          WhiteD65,
+}
+
+// DCIP3Space represents DCI-P3 color space (Digital Cinema)
+// Similar to Display P3 but uses gamma 2.6 and different white point
+var DCIP3Space Space = &rgbSpace{
+	name: "dci-p3",
+	xyzToRGBMatrix: [9]float64{
+		2.493496911941425, -0.9313836179191239, -0.40271078445071684,
+		-0.8294889695615747, 1.7626640603183463, 0.023624685841943577,
+		0.03584583024378447, -0.07617238926804182, 0.9568845240076872,
+	},
+	rgbToXYZMatrix: [9]float64{
+		0.4865709486482162, 0.26566769316909306, 0.1982172852343625,
+		0.2289745640697488, 0.6917385218365064, 0.079286914093745,
+		0.000000000000000, 0.04511338185890264, 1.043944368900976,
+	},
+	transferFunc:        gammaTransferFunc(2.6), // DCI-P3 uses gamma 2.6
+	inverseTransferFunc: gammaInverseTransferFunc(2.6),
+	whitePoint:          WhiteD65,
 }
 

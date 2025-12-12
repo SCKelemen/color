@@ -120,11 +120,45 @@ func Complement(c Color) Color {
 }
 
 // estimateMaxChroma estimates the maximum chroma for a given lightness and hue in OKLCH.
-// This is a simplified approximation.
+// This uses binary search to find the gamut boundary accurately.
 func estimateMaxChroma(l, h float64) float64 {
-	// Rough approximation - in practice, this would require gamut mapping
-	// For now, use a conservative estimate
-	return 0.4 * (1 - math.Abs(l-0.5)*2)
+	// Clamp lightness to valid range
+	l = clamp01(l)
+
+	// Special cases: pure black or white have no chroma
+	if l <= 0.001 || l >= 0.999 {
+		return 0
+	}
+
+	// Binary search for maximum in-gamut chroma
+	minC := 0.0
+	maxC := 0.5 // Start with a reasonable upper bound
+
+	// Quick check if upper bound is in gamut
+	testColor := NewOKLCH(l, maxC, h, 1.0)
+	if InGamut(testColor) {
+		// Try even higher values
+		for maxC < 2.0 {
+			testColor = NewOKLCH(l, maxC*2, h, 1.0)
+			if !InGamut(testColor) {
+				break
+			}
+			maxC *= 2
+		}
+	}
+
+	// Binary search with 15 iterations (~0.003% precision)
+	for i := 0; i < 15; i++ {
+		midC := (minC + maxC) / 2
+		testColor = NewOKLCH(l, midC, h, 1.0)
+		if InGamut(testColor) {
+			minC = midC
+		} else {
+			maxC = midC
+		}
+	}
+
+	return minC
 }
 
 // Opacity returns a color with the specified opacity (alpha).
