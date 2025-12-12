@@ -160,69 +160,10 @@ func findNearestColorInPalette(c color.Color, palette color.Palette) color.Color
 	return bestColor
 }
 
-// createGlobalPalette creates a palette using median cut algorithm
-// This ensures good color distribution across the actual colors in the frames
+// createGlobalPalette creates a uniform RGB cube palette
+// This evenly samples the RGB gamut to ensure full color coverage
 func createGlobalPalette(frames []image.Image) color.Palette {
-	// Add transparent color first
-	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
-	
-	// Collect all colors from frames
-	// Sample more densely to ensure we capture the full gamut
-	allColors := make([]color.RGBA, 0)
-	step := 1 // Sample every pixel for maximum accuracy
-	
-	// Also ensure we sample evenly across all frames, not just the first ones
-	frameStep := 1 // Use every frame
-	if len(frames) > 30 {
-		frameStep = len(frames) / 30 // If we have many frames, sample evenly across them
-	}
-	
-	for i := 0; i < len(frames); i += frameStep {
-		img := frames[i]
-		bounds := img.Bounds()
-		for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
-			for x := bounds.Min.X; x < bounds.Max.X; x += step {
-				c := img.At(x, y)
-				r, g, b, a := c.RGBA()
-				
-				// Skip fully transparent pixels
-				if a == 0 {
-					continue
-				}
-				
-				allColors = append(allColors, color.RGBA{
-					R: uint8(r >> 8),
-					G: uint8(g >> 8),
-					B: uint8(b >> 8),
-					A: uint8(a >> 8),
-				})
-			}
-		}
-	}
-	
-	if len(allColors) == 0 {
-		// Fallback: uniform grid
-		return createUniformPalette()
-	}
-	
-	// Use median cut to select 255 colors
-	selectedColors := medianCut(allColors, 255)
-	
-	// Add selected colors to palette
-	for _, c := range selectedColors {
-		palette = append(palette, c)
-	}
-	
-	// Pad to 256 colors if needed
-	var lastColor color.Color = color.RGBA{0, 0, 0, 0}
-	if len(palette) > 1 {
-		lastColor = palette[len(palette)-1]
-	}
-	for len(palette) < 256 {
-		palette = append(palette, lastColor)
-	}
-	
-	return palette
+	return createUniformPalette()
 }
 
 // medianCut implements the median cut algorithm to select representative colors
