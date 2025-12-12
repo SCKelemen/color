@@ -38,6 +38,25 @@ func init() {
 	RegisterSpace("rec-709", Rec709Space) // Alias
 
 	RegisterSpace("oklch", OKLCHSpace)
+
+	// LOG color spaces for professional cinema cameras
+	RegisterSpace("c-log", CLogSpace)
+	RegisterSpace("clog", CLogSpace) // Alias
+
+	RegisterSpace("s-log3", SLog3Space)
+	RegisterSpace("slog3", SLog3Space) // Alias
+
+	RegisterSpace("v-log", VLogSpace)
+	RegisterSpace("vlog", VLogSpace) // Alias
+
+	RegisterSpace("arri-logc", ArriLogCSpace)
+	RegisterSpace("logc", ArriLogCSpace) // Alias
+
+	RegisterSpace("red-log3g10", RedLog3G10Space)
+	RegisterSpace("log3g10", RedLog3G10Space) // Alias
+
+	RegisterSpace("bmd-film", BMDFilmSpace)
+	RegisterSpace("bmdfilm", BMDFilmSpace) // Alias
 }
 
 // RegisterSpace registers a color space with the given name(s).
