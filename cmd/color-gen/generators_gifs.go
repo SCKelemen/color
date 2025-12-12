@@ -328,36 +328,21 @@ func (b *colorBox) split() (*colorBox, *colorBox) {
 	rangeB := maxB - minB
 	
 	// Sort by the channel with the largest range
-	var sortFunc func(i, j int) bool
-	var medianValue uint8
-	
 	if rangeR >= rangeG && rangeR >= rangeB {
 		// Sort by R
 		sort.Slice(b.colors, func(i, j int) bool {
 			return b.colors[i].R < b.colors[j].R
 		})
-		medianValue = b.colors[len(b.colors)/2].R
-		sortFunc = func(i, j int) bool {
-			return b.colors[i].R < medianValue
-		}
 	} else if rangeG >= rangeB {
 		// Sort by G
 		sort.Slice(b.colors, func(i, j int) bool {
 			return b.colors[i].G < b.colors[j].G
 		})
-		medianValue = b.colors[len(b.colors)/2].G
-		sortFunc = func(i, j int) bool {
-			return b.colors[i].G < medianValue
-		}
 	} else {
 		// Sort by B
 		sort.Slice(b.colors, func(i, j int) bool {
 			return b.colors[i].B < b.colors[j].B
 		})
-		medianValue = b.colors[len(b.colors)/2].B
-		sortFunc = func(i, j int) bool {
-			return b.colors[i].B < medianValue
-		}
 	}
 	
 	// Split at median (colors are already sorted)
