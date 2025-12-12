@@ -1,13 +1,19 @@
 package color
 
-import "math"
+import (
+	"math"
+	"sort"
+)
 
 // Gradient generates a gradient between two colors in a perceptually uniform color space.
 // Steps is the number of colors to generate (including start and end).
 // The gradient is computed in OKLCH space for perceptually uniform results.
 func Gradient(start, end Color, steps int) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	result := make([]Color, steps)
@@ -22,8 +28,11 @@ func Gradient(start, end Color, steps int) []Color {
 // GradientInSpace generates a gradient in a specific color space.
 // This allows you to control which color space is used for interpolation.
 func GradientInSpace(start, end Color, steps int, space GradientSpace) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	result := make([]Color, steps)
@@ -51,6 +60,20 @@ const (
 	GradientLCH
 	// GradientOKLCH interpolates in OKLCH space (perceptually uniform, recommended)
 	GradientOKLCH
+)
+
+// HueInterpolation specifies how to interpolate hue values in cylindrical color spaces.
+type HueInterpolation int
+
+const (
+	// HueShorter interpolates hue using the shortest path around the color wheel (default)
+	HueShorter HueInterpolation = iota
+	// HueLonger interpolates hue using the longer path around the color wheel
+	HueLonger
+	// HueIncreasing interpolates hue in the direction of increasing values
+	HueIncreasing
+	// HueDecreasing interpolates hue in the direction of decreasing values
+	HueDecreasing
 )
 
 // MixInSpace mixes two colors in the specified color space.
@@ -81,7 +104,7 @@ func mixHSL(c1, c2 Color, weight float64) Color {
 	hsl2 := ToHSL(c2)
 
 	// Interpolate HSL components
-	h := interpolateHue(hsl1.H, hsl2.H, weight)
+	h := interpolateHue(hsl1.H, hsl2.H, weight, HueShorter)
 	s := hsl1.S*(1-weight) + hsl2.S*weight
 	l := hsl1.L*(1-weight) + hsl2.L*weight
 	a := hsl1.A*(1-weight) + hsl2.A*weight
@@ -122,7 +145,7 @@ func mixLCH(c1, c2 Color, weight float64) Color {
 
 	l := lch1.L*(1-weight) + lch2.L*weight
 	c := lch1.C*(1-weight) + lch2.C*weight
-	h := interpolateHue(lch1.H, lch2.H, weight)
+	h := interpolateHue(lch1.H, lch2.H, weight, HueShorter)
 	alpha := lch1.Alpha()*(1-weight) + lch2.Alpha()*weight
 
 	return NewLCH(l, c, h, alpha)
@@ -148,27 +171,23 @@ type GradientStop struct {
 //	}
 //	gradient := color.GradientMultiStop(stops, 20, color.GradientOKLCH)
 func GradientMultiStop(stops []GradientStop, steps int, space GradientSpace) []Color {
-	if len(stops) < 2 {
-		if len(stops) == 1 {
-			result := make([]Color, steps)
-			for i := range result {
-				result[i] = stops[0].Color
-			}
-			return result
+	if len(stops) == 0 {
+		return []Color{}
+	}
+	if len(stops) == 1 {
+		result := make([]Color, steps)
+		for i := range result {
+			result[i] = stops[0].Color
 		}
-		return nil
+		return result
 	}
 
 	// Sort stops by position
 	sortedStops := make([]GradientStop, len(stops))
 	copy(sortedStops, stops)
-	for i := 0; i < len(sortedStops)-1; i++ {
-		for j := i + 1; j < len(sortedStops); j++ {
-			if sortedStops[i].Position > sortedStops[j].Position {
-				sortedStops[i], sortedStops[j] = sortedStops[j], sortedStops[i]
-			}
-		}
-	}
+	sort.Slice(sortedStops, func(i, j int) bool {
+		return sortedStops[i].Position < sortedStops[j].Position
+	})
 
 	// Ensure first stop is at 0 and last is at 1
 	if sortedStops[0].Position > 0 {
@@ -212,6 +231,22 @@ func interpolateMultiStop(stops []GradientStop, t float64, space GradientSpace) 
 }
 
 // EasingFunction defines a function that maps a linear progress [0, 1] to an eased progress [0, 1].
+// Users can create custom easing functions by implementing this interface.
+//
+// Requirements:
+//   - Input t should be in range [0, 1]
+//   - Output should be in range [0, 1]
+//   - Should map 0 to 0 and 1 to 1
+//
+// Example of creating a custom easing function:
+//
+//	// Custom exponential easing
+//	myEasing := color.EasingFunction(func(t float64) float64 {
+//	    return 1 - math.Pow(1-t, 3) // Ease-out cubic
+//	})
+//
+//	// Use it in a gradient
+//	gradient := color.GradientWithEasing(red, blue, 20, color.GradientOKLCH, myEasing)
 type EasingFunction func(t float64) float64
 
 // Easing functions for non-linear gradients
@@ -277,8 +312,11 @@ var (
 //	// Create a gradient that starts slow and speeds up (ease-in)
 //	gradient := color.GradientWithEasing(red, blue, 20, color.GradientOKLCH, color.EaseInQuad)
 func GradientWithEasing(start, end Color, steps int, space GradientSpace, easing EasingFunction) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	if easing == nil {
@@ -298,15 +336,15 @@ func GradientWithEasing(start, end Color, steps int, space GradientSpace, easing
 // GradientMultiStopWithEasing generates a multistop gradient with easing applied.
 // The easing function is applied to the overall gradient progress.
 func GradientMultiStopWithEasing(stops []GradientStop, steps int, space GradientSpace, easing EasingFunction) []Color {
-	if len(stops) < 2 {
-		if len(stops) == 1 {
-			result := make([]Color, steps)
-			for i := range result {
-				result[i] = stops[0].Color
-			}
-			return result
+	if len(stops) == 0 {
+		return []Color{}
+	}
+	if len(stops) == 1 {
+		result := make([]Color, steps)
+		for i := range result {
+			result[i] = stops[0].Color
 		}
-		return nil
+		return result
 	}
 
 	if easing == nil {
@@ -316,13 +354,9 @@ func GradientMultiStopWithEasing(stops []GradientStop, steps int, space Gradient
 	// Sort stops by position
 	sortedStops := make([]GradientStop, len(stops))
 	copy(sortedStops, stops)
-	for i := 0; i < len(sortedStops)-1; i++ {
-		for j := i + 1; j < len(sortedStops); j++ {
-			if sortedStops[i].Position > sortedStops[j].Position {
-				sortedStops[i], sortedStops[j] = sortedStops[j], sortedStops[i]
-			}
-		}
-	}
+	sort.Slice(sortedStops, func(i, j int) bool {
+		return sortedStops[i].Position < sortedStops[j].Position
+	})
 
 	// Ensure first stop is at 0 and last is at 1
 	if sortedStops[0].Position > 0 {
@@ -343,16 +377,41 @@ func GradientMultiStopWithEasing(stops []GradientStop, steps int, space Gradient
 	return result
 }
 
-// interpolateHue interpolates hue taking the shortest path around the color wheel.
-func interpolateHue(h1, h2, weight float64) float64 {
+// interpolateHue interpolates hue using the specified interpolation method.
+func interpolateHue(h1, h2, weight float64, method HueInterpolation) float64 {
 	dh := h2 - h1
-	if math.Abs(dh) > 180 {
-		if dh > 0 {
-			dh -= 360
-		} else {
+
+	switch method {
+	case HueShorter:
+		// Take the shortest path around the color wheel
+		if math.Abs(dh) > 180 {
+			if dh > 0 {
+				dh -= 360
+			} else {
+				dh += 360
+			}
+		}
+	case HueLonger:
+		// Take the longer path around the color wheel
+		if math.Abs(dh) <= 180 {
+			if dh > 0 {
+				dh -= 360
+			} else {
+				dh += 360
+			}
+		}
+	case HueIncreasing:
+		// Always go in increasing direction
+		if dh < 0 {
 			dh += 360
 		}
+	case HueDecreasing:
+		// Always go in decreasing direction
+		if dh > 0 {
+			dh -= 360
+		}
 	}
+
 	return normalizeHue(h1 + dh*weight)
 }
 

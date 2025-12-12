@@ -148,3 +148,87 @@ r, g, b, _ := backToP3.RGBA()
 sRGB := saturated.RGBA() // Already in sRGB via Color interface
 ```
 
+## Custom Easing Functions
+
+You can easily create your own easing functions! The `EasingFunction` type is simply a function that maps `[0, 1]` to `[0, 1]`.
+
+### Creating Custom Easing Functions
+
+```go
+import (
+    "math"
+    "github.com/SCKelemen/color"
+)
+
+// Example 1: Simple exponential easing
+myEasing := color.EasingFunction(func(t float64) float64 {
+    return 1 - math.Pow(1-t, 3) // Ease-out cubic
+})
+
+// Example 2: Elastic easing (bouncy effect)
+elasticEasing := color.EasingFunction(func(t float64) float64 {
+    if t == 0 || t == 1 {
+        return t
+    }
+    c4 := (2 * math.Pi) / 3
+    return math.Pow(2, -10*t) * math.Sin((t*10-0.75)*c4) + 1
+})
+
+// Example 3: Bounce easing
+bounceEasing := color.EasingFunction(func(t float64) float64 {
+    if t < 1/2.75 {
+        return 7.5625 * t * t
+    } else if t < 2/2.75 {
+        t -= 1.5 / 2.75
+        return 7.5625*t*t + 0.75
+    } else if t < 2.5/2.75 {
+        t -= 2.25 / 2.75
+        return 7.5625*t*t + 0.9375
+    } else {
+        t -= 2.625 / 2.75
+        return 7.5625*t*t + 0.984375
+    }
+})
+
+// Use your custom easing function
+red := color.RGB(1, 0, 0)
+blue := color.RGB(0, 0, 1)
+gradient := color.GradientWithEasing(red, blue, 20, color.GradientOKLCH, myEasing)
+```
+
+### Easing Function Requirements
+
+Your custom easing function must:
+- Accept a `float64` parameter `t` in range `[0, 1]`
+- Return a `float64` in range `[0, 1]`
+- Map `0` to `0` and `1` to `1`
+
+### Built-in Easing Functions
+
+The library provides 10 built-in easing functions:
+- `EaseLinear` - No easing (linear)
+- `EaseInQuad`, `EaseOutQuad`, `EaseInOutQuad` - Quadratic curves
+- `EaseInCubic`, `EaseOutCubic`, `EaseInOutCubic` - Cubic curves
+- `EaseInSine`, `EaseOutSine`, `EaseInOutSine` - Sinusoidal curves
+
+### Example: Custom Easing with Multistop Gradients
+
+```go
+// Create a custom easing that emphasizes the middle
+middleEmphasis := color.EasingFunction(func(t float64) float64 {
+    // Slow at start, fast in middle, slow at end
+    if t < 0.5 {
+        return 2 * t * t // Ease-in quadratic
+    }
+    return 1 - 2*(1-t)*(1-t) // Ease-out quadratic
+})
+
+stops := []color.GradientStop{
+    {Color: color.RGB(1, 0, 0), Position: 0.0},   // Red
+    {Color: color.RGB(1, 1, 0), Position: 0.5}, // Yellow
+    {Color: color.RGB(0, 0, 1), Position: 1.0}, // Blue
+}
+
+gradient := color.GradientMultiStopWithEasing(stops, 20, color.GradientOKLCH, middleEmphasis)
+```
+

@@ -56,12 +56,18 @@ func (c *LAB) toLCH() *LCH {
 	return &LCH{L: c.L, C: c_, H: h, A_: c.A_}
 }
 
-// normalizeHue normalizes hue to [0, 360).
-func normalizeHue(h float64) float64 {
+// NormalizeHue normalizes hue to [0, 360).
+// This is useful when working with cylindrical color spaces like HSL, HSV, LCH, and OKLCH.
+func NormalizeHue(h float64) float64 {
 	h = math.Mod(h, 360)
 	if h < 0 {
 		h += 360
 	}
 	return h
+}
+
+// normalizeHue is a private alias for backward compatibility
+func normalizeHue(h float64) float64 {
+	return NormalizeHue(h)
 }
 

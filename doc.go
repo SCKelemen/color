@@ -11,6 +11,7 @@
 //   - Gradient Generation: Generate smooth gradients with multiple stops and easing functions
 //   - Utility Functions: Lighten, darken, saturate, desaturate, invert, grayscale,
 //     complement, and more
+//   - Standard Library Compatibility: Convert to/from image/color.Color interface
 //
 // Basic Usage:
 //

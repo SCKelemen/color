@@ -34,6 +34,14 @@ func (c *OKLCH) WithAlpha(alpha float64) Color {
 	return &OKLCH{L: c.L, C: c.C, H: c.H, A_: clamp01(alpha)}
 }
 
+// String returns a CSS oklch() representation.
+func (c *OKLCH) String() string {
+	if c.A_ < 1.0 {
+		return formatString("oklch(%g %g %g / %g)", c.L, c.C, c.H, c.A_)
+	}
+	return formatString("oklch(%g %g %g)", c.L, c.C, c.H)
+}
+
 // toOKLAB converts OKLCH to OKLAB.
 func (c *OKLCH) toOKLAB() *OKLAB {
 	rad := c.H * math.Pi / 180
