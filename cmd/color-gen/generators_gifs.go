@@ -146,143 +146,51 @@ func findNearestColorInPalette(c color.Color, palette color.Palette) color.Color
 	return bestColor
 }
 
-// createGlobalPalette creates a color palette from all frames
-// Uses median cut algorithm to select the best 256 colors distributed across the gamut
+// createGlobalPalette creates an evenly distributed palette across the RGB gamut
+// Since these are color space visualizations, we generate a uniform grid in RGB space
 func createGlobalPalette(frames []image.Image) color.Palette {
 	// Add transparent color first
 	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
 	
-	// Collect all colors from all frames (with frequency)
-	type colorCount struct {
-		color color.RGBA
-		count int
-	}
-	colorMap := make(map[uint32]*colorCount)
+	// Generate evenly distributed colors across RGB gamut
+	// We want 255 colors, so we'll use a 6x6x7 grid (252 colors) + 3 extra
+	// This gives us good coverage of the RGB cube
 	
-	// Sample colors from all frames evenly
-	// Sample every 3rd pixel to get good coverage without being too slow
-	step := 3
-	for _, img := range frames {
-		bounds := img.Bounds()
-		for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
-			for x := bounds.Min.X; x < bounds.Max.X; x += step {
-				c := img.At(x, y)
-				r, g, b, a := c.RGBA()
-				
-				// Skip fully transparent pixels
-				if a == 0 {
-					continue
-				}
-				
-				// Use less aggressive quantization (7 bits per channel) to preserve more colors
-				rq := (r >> 9) << 9
-				gq := (g >> 9) << 9
-				bq := (b >> 9) << 9
-				
-				// Create a key for this quantized color
-				key := uint32(rq>>8)<<24 | uint32(gq>>8)<<16 | uint32(bq>>8)<<8 | 255
-				
-				// Count frequency of this color
-				if cc, exists := colorMap[key]; exists {
-					cc.count++
-				} else {
-					colorMap[key] = &colorCount{
-						color: color.RGBA{
-							R: uint8(r >> 8),
-							G: uint8(g >> 8),
-							B: uint8(b >> 8),
-							A: uint8(a >> 8),
-						},
-						count: 1,
-					}
-				}
+	// Create a uniform grid in RGB space
+	// Using 6 levels for R and G, 7 for B to get close to 255
+	colors := make([]color.Color, 0, 255)
+	
+	// Generate colors on a uniform grid
+	for r := 0; r < 6; r++ {
+		for g := 0; g < 6; g++ {
+			for b := 0; b < 7; b++ {
+				// Map to 0-255 range
+				R := uint8((r * 255) / 5)
+				G := uint8((g * 255) / 5)
+				B := uint8((b * 255) / 6)
+				colors = append(colors, color.RGBA{R, G, B, 255})
 			}
 		}
 	}
 	
-	// Convert to slice for processing
-	allColors := make([]*colorCount, 0, len(colorMap))
-	for _, cc := range colorMap {
-		allColors = append(allColors, cc)
+	// Add a few extra colors to fill to 255 (6*6*7 = 252, need 3 more)
+	// Add some saturated colors that might be missing
+	extraColors := []color.RGBA{
+		{255, 255, 255, 255}, // White
+		{128, 128, 128, 255}, // Gray
+		{0, 0, 0, 255},       // Black (though transparent is already first)
 	}
 	
-	// If we have more than 255 colors, use a simple but effective selection:
-	// Sort by frequency (most common colors first), but also ensure diversity
-	if len(allColors) > 255 {
-		// Sort by count (descending) to prioritize common colors
-		sort.Slice(allColors, func(i, j int) bool {
-			return allColors[i].count > allColors[j].count
-		})
-		
-		// Take top colors, but also sample from different parts of the color space
-		// to ensure we get good gamut coverage
-		selected := make(map[uint32]bool)
-		result := make([]color.Color, 0, 255)
-		
-		// First, take top 128 most frequent colors
-		for i := 0; i < 128 && i < len(allColors); i++ {
-			cc := allColors[i]
-			key := uint32(cc.color.R)<<24 | uint32(cc.color.G)<<16 | uint32(cc.color.B)<<8 | 255
-			if !selected[key] {
-				selected[key] = true
-				result = append(result, cc.color)
-			}
-		}
-		
-		// Then, sample evenly across the remaining colors to ensure gamut coverage
-		// Divide color space into buckets and take one from each
-		buckets := make([][]*colorCount, 64) // 4x4x4 = 64 buckets
-		for _, cc := range allColors[128:] {
-			// Map to bucket based on RGB
-			rBucket := int(cc.color.R) / 64
-			gBucket := int(cc.color.G) / 64
-			bBucket := int(cc.color.B) / 64
-			bucketIdx := rBucket*16 + gBucket*4 + bBucket
-			if bucketIdx >= 0 && bucketIdx < 64 {
-				buckets[bucketIdx] = append(buckets[bucketIdx], cc)
-			}
-		}
-		
-		// Take one color from each non-empty bucket
-		for _, bucket := range buckets {
-			if len(bucket) > 0 && len(result) < 255 {
-				// Take the most frequent color from this bucket
-				best := bucket[0]
-				for _, cc := range bucket[1:] {
-					if cc.count > best.count {
-						best = cc
-					}
-				}
-				key := uint32(best.color.R)<<24 | uint32(best.color.G)<<16 | uint32(best.color.B)<<8 | 255
-				if !selected[key] {
-					selected[key] = true
-					result = append(result, best.color)
-				}
-			}
-		}
-		
-		// Fill remaining slots with most frequent remaining colors
-		for _, cc := range allColors {
-			if len(result) >= 255 {
-				break
-			}
-			key := uint32(cc.color.R)<<24 | uint32(cc.color.G)<<16 | uint32(cc.color.B)<<8 | 255
-			if !selected[key] {
-				selected[key] = true
-				result = append(result, cc.color)
-			}
-		}
-		
-		allColors = nil // Clear to use result
-		palette = append(palette, result...)
-	} else {
-		// We have 255 or fewer colors, just add them all
-		for _, cc := range allColors {
-			palette = append(palette, cc.color)
+	for _, ec := range extraColors {
+		if len(colors) < 255 {
+			colors = append(colors, ec)
 		}
 	}
 	
-	// Pad to 256 colors if needed (use last color or transparent)
+	// Add all colors to palette
+	palette = append(palette, colors...)
+	
+	// Pad to 256 colors if needed
 	var lastColor color.Color = color.RGBA{0, 0, 0, 0}
 	if len(palette) > 1 {
 		lastColor = palette[len(palette)-1]
