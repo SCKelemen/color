@@ -455,6 +455,30 @@ A: Yes! Converts to/from `image/color.Color` interface.
 **Q: Why not just use CSS color functions?**
 A: CSS only works in browsers. This works anywhere Go runs - CLIs, backends, image processing, etc.
 
+## Documentation
+
+### 📚 Complete Documentation
+
+**[📖 Documentation Hub](docs/README.md)** - Start here for organized documentation
+
+### By Category
+
+- **[📘 API Reference](docs/reference/api-overview.md)** - Complete API documentation
+- **[🎨 Color Space List](docs/reference/color-space-list.md)** - All supported color spaces
+- **[🚀 Quickstart Guide](QUICKSTART.md)** - Get started in 5 minutes
+
+### Guides
+
+- **[Gradient Generation](docs/guides/gradients.md)** - Perceptually uniform gradients
+- **[LOG Workflows](docs/guides/log-workflows.md)** - Cinema camera color spaces
+- **[Lipgloss Integration](docs/guides/lipgloss-integration.md)** - Terminal UI styling
+
+### Learn More
+
+- **[Color Primer](docs/theory/color-primer.md)** - Color science fundamentals
+- **[Why Use This Library](docs/theory/why-use-this.md)** - Decision guide
+- **[Visual Comparisons](docs/theory/visual-comparisons.md)** - See the difference
+
 ## Contributing
 
 Contributions welcome! Areas where help would be appreciated:
