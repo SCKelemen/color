@@ -128,8 +128,8 @@ func TestHWBEdgeCases(t *testing.T) {
 
 			// Convert to RGB
 			r, g, b, a := hwb.RGBA()
-			if r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 {
-				t.Errorf("RGB values out of range: (%f, %f, %f)", r, g, b)
+			if r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1 {
+				t.Errorf("RGB values out of range: (%f, %f, %f, %f)", r, g, b, a)
 			}
 		})
 	}
@@ -148,12 +148,12 @@ func TestColorConversionRoundTrips(t *testing.T) {
 
 	tolerance := 0.01
 
-	for i, original := range testColors {
-		t.Run(formatString("Color%d", float64(i)), func(t *testing.T) {
+	for _, original := range testColors {
+		t.Run(RGBToHex(original), func(t *testing.T) {
 			// RGB -> OKLCH -> RGB
 			oklch := ToOKLCH(original)
-			r1, g1, b1, a1 := oklch.RGBA()
-			r0, g0, b0, a0 := original.RGBA()
+			r1, g1, b1, _ := oklch.RGBA()
+			r0, g0, b0, _ := original.RGBA()
 
 			if math.Abs(r1-r0) > tolerance || math.Abs(g1-g0) > tolerance || math.Abs(b1-b0) > tolerance {
 				t.Errorf("OKLCH round trip failed: (%f,%f,%f) -> (%f,%f,%f)", r0, g0, b0, r1, g1, b1)
@@ -161,7 +161,7 @@ func TestColorConversionRoundTrips(t *testing.T) {
 
 			// RGB -> HSL -> RGB
 			hsl := ToHSL(original)
-			r2, g2, b2, a2 := hsl.RGBA()
+			r2, g2, b2, _ := hsl.RGBA()
 
 			if math.Abs(r2-r0) > tolerance || math.Abs(g2-g0) > tolerance || math.Abs(b2-b0) > tolerance {
 				t.Errorf("HSL round trip failed: (%f,%f,%f) -> (%f,%f,%f)", r0, g0, b0, r2, g2, b2)
@@ -207,7 +207,7 @@ func TestAlphaPreservation(t *testing.T) {
 	base := RGB(0.5, 0.3, 0.7)
 
 	for _, alpha := range alphas {
-		t.Run(formatString("Alpha%.2f", alpha), func(t *testing.T) {
+		t.Run(RGBToHex(base.WithAlpha(alpha)), func(t *testing.T) {
 			c := base.WithAlpha(alpha)
 
 			// Test that alpha is preserved through conversions
