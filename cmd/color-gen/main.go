@@ -118,7 +118,7 @@ func main() {
 		}(),
 
 		func() *clix.Command {
-			cmd := clix.NewCommand("gifs", clix.WithCommandShort("Convert animation frames to animated GIFs"))
+			cmd := clix.NewCommand("gifs", clix.WithCommandShort("Convert animation frames to animated GIFs with improved quality"))
 			cmd.Run = func(ctx *clix.Context) error {
 				return generateGIFs()
 			}
@@ -126,7 +126,15 @@ func main() {
 		}(),
 
 		func() *clix.Command {
-			cmd := clix.NewCommand("all", clix.WithCommandShort("Generate all visualizations (gradients, stops, gamuts, chromaticity, models, animations, gifs)"))
+			cmd := clix.NewCommand("static", clix.WithCommandShort("Generate high-quality static PNG images of color models"))
+			cmd.Run = func(ctx *clix.Context) error {
+				return generateStaticImages()
+			}
+			return cmd
+		}(),
+
+		func() *clix.Command {
+			cmd := clix.NewCommand("all", clix.WithCommandShort("Generate all visualizations (gradients, stops, gamuts, chromaticity, models, animations, gifs, static)"))
 			cmd.Run = func(ctx *clix.Context) error {
 				var startColor, endColor string
 				start := ctx.Arg(0)
@@ -170,6 +178,9 @@ func main() {
 				}
 				if err := generateAnimations(); err != nil {
 					return fmt.Errorf("animations: %w", err)
+				}
+				if err := generateStaticImages(); err != nil {
+					return fmt.Errorf("static: %w", err)
 				}
 				if err := generateGIFs(); err != nil {
 					return fmt.Errorf("gifs: %w", err)
