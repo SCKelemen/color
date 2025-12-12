@@ -166,11 +166,19 @@ func createGlobalPalette(frames []image.Image) color.Palette {
 	// Add transparent color first
 	palette := color.Palette{color.RGBA{0, 0, 0, 0}}
 	
-	// Collect all colors from frames (sample every pixel for accuracy)
+	// Collect all colors from frames
+	// Sample more densely to ensure we capture the full gamut
 	allColors := make([]color.RGBA, 0)
-	step := 2 // Sample every 2nd pixel for speed
+	step := 1 // Sample every pixel for maximum accuracy
 	
-	for _, img := range frames {
+	// Also ensure we sample evenly across all frames, not just the first ones
+	frameStep := 1 // Use every frame
+	if len(frames) > 30 {
+		frameStep = len(frames) / 30 // If we have many frames, sample evenly across them
+	}
+	
+	for i := 0; i < len(frames); i += frameStep {
+		img := frames[i]
 		bounds := img.Bounds()
 		for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
 			for x := bounds.Min.X; x < bounds.Max.X; x += step {
