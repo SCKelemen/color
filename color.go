@@ -44,6 +44,11 @@ func (c *RGBA) WithAlpha(alpha float64) Color {
 	return &RGBA{R: c.R, G: c.G, B: c.B, A: clamp01(alpha)}
 }
 
+// String returns a string representation of the color.
+func (c *RGBA) String() string {
+	return RGBToHex(c)
+}
+
 // clamp01 clamps a value to the range [0, 1].
 func clamp01(v float64) float64 {
 	if v < 0 {

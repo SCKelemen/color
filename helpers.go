@@ -1,5 +1,7 @@
 package color
 
+import "fmt"
+
 // HexToRGB converts a hex color string (with or without #) to RGB.
 // Supports formats: #RGB, #RRGGBB, #RGBA, #RRGGBBAA
 func HexToRGB(hex string) (*RGBA, error) {
@@ -153,5 +155,10 @@ func formatHexWithAlpha(r, g, b, a uint8) string {
 func formatHexByte(b uint8) string {
 	const hex = "0123456789abcdef"
 	return string([]byte{hex[b>>4], hex[b&0x0f]})
+}
+
+// formatString formats a color string.
+func formatString(format string, args ...interface{}) string {
+	return fmt.Sprintf(format, args...)
 }
 

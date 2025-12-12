@@ -227,7 +227,7 @@ func generateLABSpaceFrame(frame, totalFrames int) *image.RGBA {
 					img.Set(px, py, color.RGBA{
 						uint8(r * 255),
 						uint8(g * 255),
-						uint8(b * 255),
+						uint8(bVal * 255),
 						255,
 					})
 				}
