@@ -9,8 +9,11 @@ import (
 // Steps is the number of colors to generate (including start and end).
 // The gradient is computed in OKLCH space for perceptually uniform results.
 func Gradient(start, end Color, steps int) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	result := make([]Color, steps)
@@ -25,8 +28,11 @@ func Gradient(start, end Color, steps int) []Color {
 // GradientInSpace generates a gradient in a specific color space.
 // This allows you to control which color space is used for interpolation.
 func GradientInSpace(start, end Color, steps int, space GradientSpace) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	result := make([]Color, steps)
@@ -165,15 +171,15 @@ type GradientStop struct {
 //	}
 //	gradient := color.GradientMultiStop(stops, 20, color.GradientOKLCH)
 func GradientMultiStop(stops []GradientStop, steps int, space GradientSpace) []Color {
-	if len(stops) < 2 {
-		if len(stops) == 1 {
-			result := make([]Color, steps)
-			for i := range result {
-				result[i] = stops[0].Color
-			}
-			return result
+	if len(stops) == 0 {
+		return []Color{}
+	}
+	if len(stops) == 1 {
+		result := make([]Color, steps)
+		for i := range result {
+			result[i] = stops[0].Color
 		}
-		return nil
+		return result
 	}
 
 	// Sort stops by position
@@ -306,8 +312,11 @@ var (
 //	// Create a gradient that starts slow and speeds up (ease-in)
 //	gradient := color.GradientWithEasing(red, blue, 20, color.GradientOKLCH, color.EaseInQuad)
 func GradientWithEasing(start, end Color, steps int, space GradientSpace, easing EasingFunction) []Color {
-	if steps < 2 {
-		return []Color{start, end}
+	if steps <= 0 {
+		return []Color{}
+	}
+	if steps == 1 {
+		return []Color{start}
 	}
 
 	if easing == nil {
@@ -327,15 +336,15 @@ func GradientWithEasing(start, end Color, steps int, space GradientSpace, easing
 // GradientMultiStopWithEasing generates a multistop gradient with easing applied.
 // The easing function is applied to the overall gradient progress.
 func GradientMultiStopWithEasing(stops []GradientStop, steps int, space GradientSpace, easing EasingFunction) []Color {
-	if len(stops) < 2 {
-		if len(stops) == 1 {
-			result := make([]Color, steps)
-			for i := range result {
-				result[i] = stops[0].Color
-			}
-			return result
+	if len(stops) == 0 {
+		return []Color{}
+	}
+	if len(stops) == 1 {
+		result := make([]Color, steps)
+		for i := range result {
+			result[i] = stops[0].Color
 		}
-		return nil
+		return result
 	}
 
 	if easing == nil {

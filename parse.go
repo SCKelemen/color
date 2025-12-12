@@ -218,6 +218,11 @@ func parseNumber(s string) (float64, error) {
 // parseRGB parses RGB/RGBA arguments.
 // Supports both legacy (comma-separated) and modern (space-separated) syntax.
 func parseRGB(args []string, hasAlpha bool) (Color, error) {
+	// Check for too many arguments - max 4 (rgb + alpha)
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "RGB/RGBA requires at most 4 arguments"}
+	}
+
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "RGB requires at least 3 arguments"}
 	}
@@ -226,8 +231,15 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
-	// If > 1, assume 0-255 range, convert to 0-1
+	// Validate range before conversion
+	if r < 0 {
+		return nil, &ParseError{input: args[0], reason: "RGB red component cannot be negative"}
+	}
+	// If > 1, assume 0-255 range, validate and convert to 0-1
 	if r > 1 {
+		if r > 255 {
+			return nil, &ParseError{input: args[0], reason: "RGB red component out of range (0-255)"}
+		}
 		r = r / 255.0
 	}
 
@@ -235,7 +247,13 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
+	if g < 0 {
+		return nil, &ParseError{input: args[1], reason: "RGB green component cannot be negative"}
+	}
 	if g > 1 {
+		if g > 255 {
+			return nil, &ParseError{input: args[1], reason: "RGB green component out of range (0-255)"}
+		}
 		g = g / 255.0
 	}
 
@@ -243,7 +261,13 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
+	if b < 0 {
+		return nil, &ParseError{input: args[2], reason: "RGB blue component cannot be negative"}
+	}
 	if b > 1 {
+		if b > 255 {
+			return nil, &ParseError{input: args[2], reason: "RGB blue component out of range (0-255)"}
+		}
 		b = b / 255.0
 	}
 
@@ -266,6 +290,11 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 // parseHSL parses HSL/HSLA arguments.
 // Supports both legacy (comma-separated) and modern (space-separated) syntax.
 func parseHSL(args []string, hasAlpha bool) (Color, error) {
+	// Check for too many arguments - max 4 (hsl + alpha)
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSL/HSLA requires at most 4 arguments"}
+	}
+
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSL requires at least 3 arguments"}
 	}
@@ -274,19 +303,28 @@ func parseHSL(args []string, hasAlpha bool) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Hue is in degrees, not normalized
+	// Hue is in degrees, validate range 0-360
+	if h < 0 || h > 360 {
+		return nil, &ParseError{input: args[0], reason: "HSL hue out of range (0-360 degrees)"}
+	}
 
 	s, err := parseNumber(args[1])
 	if err != nil {
 		return nil, err
 	}
 	// Saturation is 0-1 (or 0-100% which parseNumber handles)
+	if s < 0 || s > 1 {
+		return nil, &ParseError{input: args[1], reason: "HSL saturation out of range (0-100%)"}
+	}
 
 	l, err := parseNumber(args[2])
 	if err != nil {
 		return nil, err
 	}
 	// Lightness is 0-1 (or 0-100% which parseNumber handles)
+	if l < 0 || l > 1 {
+		return nil, &ParseError{input: args[2], reason: "HSL lightness out of range (0-100%)"}
+	}
 
 	var a float64 = 1.0
 	// Check for alpha (either explicit hasAlpha flag or 4th argument)
@@ -454,10 +492,17 @@ func parseOKLCH(args []string) (Color, error) {
 		return nil, err
 	}
 	// OKLCH L is 0-1
+	if l < 0 || l > 1 {
+		return nil, &ParseError{input: args[0], reason: "OKLCH lightness out of range (0-1)"}
+	}
 
 	c, err := parseNumber(args[1])
 	if err != nil {
 		return nil, err
+	}
+	// Chroma must be non-negative
+	if c < 0 {
+		return nil, &ParseError{input: args[1], reason: "OKLCH chroma cannot be negative"}
 	}
 
 	h, err := parseNumber(args[2])

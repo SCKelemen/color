@@ -58,15 +58,14 @@ func TestParseColorValidHexFormats(t *testing.T) {
 
 func TestParseColorRGBMalformed(t *testing.T) {
 	malformed := []string{
-		"rgb()",                    // Empty
-		"rgb(255)",                 // Missing components
-		"rgb(255, 128)",            // Missing component
-		"rgb(255, 128, 64, 128)",   // Too many components (without alpha)
-		"rgb(256, 128, 64)",        // Out of range
-		"rgb(-1, 128, 64)",         // Negative
-		"rgb(a, b, c)",             // Non-numeric
-		"rgb(255 128 64)",          // Missing commas
-		"rgb(255, , 64)",           // Empty component
+		"rgb()",                      // Empty
+		"rgb(255)",                   // Missing components
+		"rgb(255, 128)",              // Missing component
+		"rgb(255, 128, 64, 128, 0)",  // Too many components (>4)
+		"rgb(256, 128, 64)",          // Out of range
+		"rgb(-1, 128, 64)",           // Negative
+		"rgb(a, b, c)",               // Non-numeric
+		"rgb(255, , 64)",             // Empty component
 	}
 
 	for _, input := range malformed {
@@ -79,14 +78,14 @@ func TestParseColorRGBMalformed(t *testing.T) {
 
 func TestParseColorHSLMalformed(t *testing.T) {
 	malformed := []string{
-		"hsl()",                      // Empty
-		"hsl(180)",                   // Missing components
-		"hsl(180, 50%)",              // Missing component
-		"hsl(180, 50%, 50%, 50%)",    // Too many components
-		"hsl(400, 50%, 50%)",         // Hue out of range
-		"hsl(180, 150%, 50%)",        // Saturation out of range
-		"hsl(180, 50%, 150%)",        // Lightness out of range
-		"hsl(abc, 50%, 50%)",         // Non-numeric hue
+		"hsl()",                         // Empty
+		"hsl(180)",                      // Missing components
+		"hsl(180, 50%)",                 // Missing component
+		"hsl(180, 50%, 50%, 50%, 50%)",  // Too many components (>4)
+		"hsl(400, 50%, 50%)",            // Hue out of range
+		"hsl(180, 150%, 50%)",           // Saturation out of range
+		"hsl(180, 50%, 150%)",           // Lightness out of range
+		"hsl(abc, 50%, 50%)",            // Non-numeric hue
 	}
 
 	for _, input := range malformed {
