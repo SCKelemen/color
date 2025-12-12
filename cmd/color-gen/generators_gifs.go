@@ -122,20 +122,34 @@ func findNearestColorInPalette(c color.Color, palette color.Palette) color.Color
 	}
 	
 	r1, g1, b1, a1 := c.RGBA()
+	
+	// Skip transparent pixels - return transparent color
+	if a1 == 0 {
+		return palette[0] // First color is transparent
+	}
+	
 	minDist := uint32(^uint32(0))
 	bestColor := palette[0]
 	
+	// Use perceptual color distance (weighted RGB)
+	// Human eye is more sensitive to green, so weight it more
 	for _, p := range palette {
 		r2, g2, b2, a2 := p.RGBA()
 		
-		// Calculate color distance (weighted by alpha)
+		// Skip transparent colors in palette (except index 0)
+		if a2 == 0 && p != palette[0] {
+			continue
+		}
+		
+		// Calculate perceptual color distance
+		// Weight green more (human eye is more sensitive to green)
 		dr := int32(r1) - int32(r2)
 		dg := int32(g1) - int32(g2)
 		db := int32(b1) - int32(b2)
-		da := int32(a1) - int32(a2)
 		
-		// Weight RGB more than alpha, and use squared distance
-		dist := uint32(dr*dr + dg*dg + db*db + da*da/4)
+		// Perceptual weights: R=0.3, G=0.59, B=0.11 (approximate)
+		// But for simplicity, we'll use squared distance with green weighted more
+		dist := uint32(dr*dr*3 + dg*dg*6 + db*db*1) // Green weighted 2x
 		
 		if dist < minDist {
 			minDist = dist
