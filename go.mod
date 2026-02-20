@@ -1,6 +1,6 @@
 module github.com/SCKelemen/color
 
-go 1.24.0
+go 1.25.4
 
 require (
 	github.com/SCKelemen/clix v0.2.0
