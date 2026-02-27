@@ -5,20 +5,20 @@ package color
 type Space interface {
 	// Name returns the name of the color space (e.g., "sRGB", "Display P3", "OKLCH")
 	Name() string
-	
+
 	// ToXYZ converts color values from this space to XYZ (linear, D65 white point).
 	// channels: color values in this space's native format
 	// Returns: x, y, z in CIE XYZ space
 	ToXYZ(channels []float64) (x, y, z float64)
-	
+
 	// FromXYZ converts XYZ values to this color space.
 	// x, y, z: CIE XYZ values (linear, D65 white point)
 	// Returns: color values in this space's native format
 	FromXYZ(x, y, z float64) []float64
-	
+
 	// Channels returns the number of color channels (3 for RGB, 4 for CMYK, etc.)
 	Channels() int
-	
+
 	// ChannelNames returns the names of the channels (e.g., ["R", "G", "B"] or ["L", "C", "H"])
 	ChannelNames() []string
 }
@@ -27,17 +27,17 @@ type Space interface {
 // This preserves the color space information and allows lossless operations.
 type SpaceColor interface {
 	Color // Still implements the base Color interface for compatibility
-	
+
 	// Space returns the color space this color is in
 	Space() Space
-	
+
 	// Channels returns the color values in the native space
 	Channels() []float64
-	
+
 	// ConvertTo converts this color to a different color space.
 	// This is where data loss may occur (gamut clipping, etc.)
 	ConvertTo(space Space) SpaceColor
-	
+
 	// ToRGBA converts to sRGB RGBA (explicit conversion, may lose data for wide-gamut colors)
 	ToRGBA() *RGBA
 }
@@ -51,14 +51,15 @@ type spaceColor struct {
 
 // NewSpaceColor creates a new color in a specific color space.
 func NewSpaceColor(space Space, channels []float64, alpha float64) SpaceColor {
-	if len(channels) != space.Channels() {
-		panic("channel count mismatch")
+	if space == nil {
+		space = SRGBSpace
 	}
-	
-	// Copy channels to avoid external mutation
-	values := make([]float64, len(channels))
+
+	// Normalize channel count to the target space instead of panicking.
+	expected := space.Channels()
+	values := make([]float64, expected)
 	copy(values, channels)
-	
+
 	return &spaceColor{
 		space:  space,
 		values: values,
@@ -135,17 +136,17 @@ func (c *spaceColor) RGBA() (r, g, b, a float64) {
 func (c *spaceColor) ToRGBA() *RGBA {
 	// Convert through XYZ to sRGB
 	x, y, z := c.space.ToXYZ(c.values)
-	
+
 	// Convert XYZ to linear sRGB
 	linearR := x*3.2404542 - y*1.5371385 - z*0.4985314
 	linearG := -x*0.9692660 + y*1.8760108 + z*0.0415560
 	linearB := x*0.0556434 - y*0.2040259 + z*1.0572252
-	
+
 	// Apply sRGB gamma correction (using function from xyz.go)
 	r := sRGBTransfer(linearR)
 	g := sRGBTransfer(linearG)
 	b := sRGBTransfer(linearB)
-	
+
 	return NewRGBA(
 		clamp01(r),
 		clamp01(g),
@@ -153,4 +154,3 @@ func (c *spaceColor) ToRGBA() *RGBA {
 		c.alpha,
 	)
 }
-

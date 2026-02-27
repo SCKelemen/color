@@ -127,10 +127,10 @@ func TestIsHexString(t *testing.T) {
 	}
 
 	invalidHex := []string{
-		"#ff",     // Too short
-		"#fffff",  // Wrong length
-		"#ggg",    // Invalid characters
-		"zzzzzz",  // Invalid characters
+		"#ff",    // Too short
+		"#fffff", // Wrong length
+		"#ggg",   // Invalid characters
+		"zzzzzz", // Invalid characters
 	}
 
 	for _, hex := range invalidHex {
@@ -329,16 +329,16 @@ func TestFromStdColorPaletted(t *testing.T) {
 	}
 }
 
-// Test NewSpaceColor with invalid channel count (should panic)
-func TestNewSpaceColorPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("NewSpaceColor should panic with wrong channel count")
-		}
-	}()
-
-	// This should panic because we're providing 2 channels instead of 3
-	NewSpaceColor(SRGBSpace, []float64{0.5, 0.6}, 1.0)
+// Test NewSpaceColor with invalid channel count (should normalize safely).
+func TestNewSpaceColorChannelNormalization(t *testing.T) {
+	c := NewSpaceColor(SRGBSpace, []float64{0.5, 0.6}, 1.0)
+	ch := c.Channels()
+	if len(ch) != 3 {
+		t.Fatalf("expected 3 channels, got %d", len(ch))
+	}
+	if ch[0] != 0.5 || ch[1] != 0.6 || ch[2] != 0.0 {
+		t.Fatalf("unexpected normalized channels: %v", ch)
+	}
 }
 
 // Test ConvertFromRGBSpace with different spaces

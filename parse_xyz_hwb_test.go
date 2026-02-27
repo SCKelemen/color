@@ -6,15 +6,16 @@ import (
 
 func TestParseXYZ(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		wantErr  bool
+		name    string
+		input   string
+		wantErr bool
 	}{
 		{"XYZ via color()", "color(xyz 0.5 0.5 0.5)", false},
 		{"XYZ D65", "color(xyz-d65 0.5 0.5 0.5)", false},
 		{"XYZ D50", "color(xyz-d50 0.5 0.5 0.5)", false},
 		{"XYZ with alpha", "color(xyz 0.5 0.5 0.5 / 0.5)", false},
 		{"Invalid XYZ", "color(xyz 0.5)", true},
+		{"Too many XYZ args", "color(xyz 0.5 0.5 0.5 0.5 0.5)", true},
 	}
 
 	for _, tt := range tests {
@@ -31,6 +32,24 @@ func TestParseXYZ(t *testing.T) {
 					t.Errorf("ParseColor(%q) = RGB(%v, %v, %v, %v), want valid color",
 						tt.input, r, g, b, a)
 				}
+			}
+		})
+	}
+}
+
+func TestParseColorFunctionRGBSpaceInvalidRanges(t *testing.T) {
+	tests := []string{
+		"color(display-p3 -0.1 0.2 0.3)",
+		"color(display-p3 300 0.2 0.3)",
+		"color(display-p3 0.1 -2 0.3)",
+		"color(display-p3 0.1 0.2 999)",
+		"color(display-p3 0.1 0.2 0.3 0.4 0.5)",
+	}
+
+	for _, input := range tests {
+		t.Run(input, func(t *testing.T) {
+			if _, err := ParseColor(input); err == nil {
+				t.Fatalf("expected ParseColor(%q) to fail", input)
 			}
 		})
 	}
@@ -101,4 +120,3 @@ func TestParseModernRGBSyntax(t *testing.T) {
 		})
 	}
 }
-

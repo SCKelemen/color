@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var (
+	hexColorRE      = regexp.MustCompile(`^[0-9A-Fa-f]{3,8}$`)
+	functionColorRE = regexp.MustCompile(`^(\w+)(?:-[\w]+)?\(([^)]+)\)$`)
+)
+
 // ParseColor parses a color string in various formats and returns a Color.
 //
 // Supported formats (all major CSS color formats):
@@ -80,7 +85,7 @@ func isHexString(s string) bool {
 		s = s[1:]
 	}
 	// Check if all characters are hex digits
-	matched, _ := regexp.MatchString(`^[0-9A-Fa-f]{3,8}$`, s)
+	matched := hexColorRE.MatchString(s)
 	return matched && (len(s) == 3 || len(s) == 4 || len(s) == 6 || len(s) == 8)
 }
 
@@ -91,8 +96,7 @@ func parseFunctionColor(s string) (Color, error) {
 
 	// Extract function name and arguments
 	// Handle both simple functions (rgb(...)) and color() function (color(xyz ...))
-	re := regexp.MustCompile(`^(\w+)(?:-[\w]+)?\(([^)]+)\)$`)
-	matches := re.FindStringSubmatch(s)
+	matches := functionColorRE.FindStringSubmatch(s)
 	if len(matches) != 3 {
 		return nil, &ParseError{input: s, reason: "invalid function format"}
 	}
@@ -622,6 +626,9 @@ func parseColorFunction(args []string) (Color, error) {
 	if len(args) < 4 {
 		return nil, &ParseError{input: strings.Join(args, " "), reason: "color() function requires color space name and 3 values"}
 	}
+	if len(args) > 5 {
+		return nil, &ParseError{input: strings.Join(args, " "), reason: "color() function requires at most 4 values after color space name"}
+	}
 
 	colorSpace := strings.ToLower(strings.TrimSpace(args[0]))
 
@@ -645,13 +652,22 @@ func parseRGBColorSpace(args []string, space *RGBColorSpace) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, " "), reason: fmt.Sprintf("%s requires 3 arguments", space.Name)}
 	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, " "), reason: fmt.Sprintf("%s requires at most 4 arguments", space.Name)}
+	}
 
 	r, err := parseNumber(args[0])
 	if err != nil {
 		return nil, err
 	}
+	if r < 0 {
+		return nil, &ParseError{input: args[0], reason: "red component cannot be negative"}
+	}
 	// If > 1, assume 0-255 range, convert to 0-1
 	if r > 1 {
+		if r > 255 {
+			return nil, &ParseError{input: args[0], reason: "red component out of range (0-255)"}
+		}
 		r = r / 255.0
 	}
 
@@ -659,7 +675,13 @@ func parseRGBColorSpace(args []string, space *RGBColorSpace) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
+	if g < 0 {
+		return nil, &ParseError{input: args[1], reason: "green component cannot be negative"}
+	}
 	if g > 1 {
+		if g > 255 {
+			return nil, &ParseError{input: args[1], reason: "green component out of range (0-255)"}
+		}
 		g = g / 255.0
 	}
 
@@ -667,7 +689,13 @@ func parseRGBColorSpace(args []string, space *RGBColorSpace) (Color, error) {
 	if err != nil {
 		return nil, err
 	}
+	if b < 0 {
+		return nil, &ParseError{input: args[2], reason: "blue component cannot be negative"}
+	}
 	if b > 1 {
+		if b > 255 {
+			return nil, &ParseError{input: args[2], reason: "blue component out of range (0-255)"}
+		}
 		b = b / 255.0
 	}
 
