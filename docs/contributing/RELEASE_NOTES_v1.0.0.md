@@ -66,8 +66,14 @@ This is the initial release of the comprehensive Go color library, providing ful
 import "github.com/SCKelemen/color"
 
 // Parse CSS colors
-red, _ := color.ParseColor("#FF0000")
-blue, _ := color.ParseColor("rgb(0, 0, 255)")
+red, err := color.ParseColor("#FF0000")
+if err != nil {
+    panic(err)
+}
+blue, err := color.ParseColor("rgb(0, 0, 255)")
+if err != nil {
+    panic(err)
+}
 
 // Create perceptually uniform gradients
 gradient := color.Gradient(red, blue, 20)
@@ -102,4 +108,3 @@ This library implements the CSS Color Module Level 4 and Level 5 specifications,
 ---
 
 **Full Changelog**: This is the initial release.
-

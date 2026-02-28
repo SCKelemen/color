@@ -125,7 +125,10 @@ redTheme := generateTheme(0)      // Red theme
 
 ```go
 // Start with a color from hex (lipgloss format)
-hexColor, _ := color.HexToRGB("#FF5733") // Orange
+hexColor, err := color.HexToRGB("#FF5733") // Orange
+if err != nil {
+    panic(err)
+}
 
 // Manipulate it
 lighter := color.Lighten(hexColor, 0.2)
@@ -195,4 +198,3 @@ This library complements lipgloss by providing advanced color manipulation capab
 - Work with alpha channels
 
 Then convert the results to lipgloss-compatible hex strings for use in your terminal UI.
-

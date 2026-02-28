@@ -83,7 +83,10 @@ gradient := color.Gradient(red, blue, 20)  // Perceptually smooth
 ### Wide-Gamut Support
 ```go
 // Display P3 color
-p3Color, _ := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+p3Color, err := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+if err != nil {
+    panic(err)
+}
 result := color.Lighten(p3Color, 0.2)  // Preserves wide gamut!
 ```
 

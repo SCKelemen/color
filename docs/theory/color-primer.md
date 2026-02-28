@@ -491,7 +491,10 @@ shades := color.Gradient(
 
 ```go
 // RAW photo in ProPhoto RGB (widest gamut)
-rawColor, _ := color.ConvertFromRGBSpace(0.9, 0.2, 0.1, 1.0, "prophoto-rgb")
+rawColor, err := color.ConvertFromRGBSpace(0.9, 0.2, 0.1, 1.0, "prophoto-rgb")
+if err != nil {
+    panic(err)
+}
 
 // Edit in perceptually uniform space
 oklch := color.ToOKLCH(rawColor)
@@ -503,15 +506,24 @@ webColor := color.MapToGamut(adjusted, color.GamutProject) // Best quality mappi
 hex := color.RGBToHex(webColor)
 
 // Export for modern displays: convert to Display P3
-p3Color, _ := color.ConvertToRGBSpace(adjusted, "display-p3")
+p3Color, err := color.ConvertToRGBSpace(adjusted, "display-p3")
+if err != nil {
+    panic(err)
+}
 // Still preserves more color than sRGB!
 ```
 
 ### Example 3: Checking if Colors Are Distinguishable
 
 ```go
-color1 := color.ParseColor("#FF6B6B")
-color2 := color.ParseColor("#FF6D6C")
+color1, err := color.ParseColor("#FF6B6B")
+if err != nil {
+    panic(err)
+}
+color2, err := color.ParseColor("#FF6D6C")
+if err != nil {
+    panic(err)
+}
 
 // Check if humans can tell them apart
 diff := color.DeltaEOK(color1, color2)

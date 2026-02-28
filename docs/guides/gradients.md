@@ -45,7 +45,10 @@ Since all colors implement the `Color` interface, you can convert between any fo
 
 ```go
 // Start with any format
-displayP3, _ := color.ParseColor("color(display-p3 1 0 0)")
+displayP3, err := color.ParseColor("color(display-p3 1 0 0)")
+if err != nil {
+    panic(err)
+}
 
 // Convert through any chain of color spaces
 oklch := color.ToOKLCH(displayP3)        // display-p3 -> OKLCH
@@ -53,7 +56,10 @@ lab := color.ToLAB(oklch)                // OKLCH -> LAB
 hsl := color.ToHSL(lab)                  // LAB -> HSL
 xyz := color.ToXYZ(hsl)                  // HSL -> XYZ
 hsv := color.ToHSV(xyz)                  // XYZ -> HSV (via RGB)
-adobeRGB, _ := color.ConvertToRGBSpace(hsv, "a98-rgb") // HSV -> Adobe RGB
+adobeRGB, err := color.ConvertToRGBSpace(hsv, "a98-rgb") // HSV -> Adobe RGB
+if err != nil {
+    panic(err)
+}
 
 // All conversions work seamlessly!
 ```
@@ -63,13 +69,28 @@ adobeRGB, _ := color.ConvertToRGBSpace(hsv, "a98-rgb") // HSV -> Adobe RGB
 ```go
 // Convert to wide-gamut RGB spaces
 rgb := color.RGB(1, 0, 0)
-displayP3, _ := color.ConvertToRGBSpace(rgb, "display-p3")
-adobeRGB, _ := color.ConvertToRGBSpace(rgb, "a98-rgb")
-proPhoto, _ := color.ConvertToRGBSpace(rgb, "prophoto-rgb")
-rec2020, _ := color.ConvertToRGBSpace(rgb, "rec2020")
+displayP3, err := color.ConvertToRGBSpace(rgb, "display-p3")
+if err != nil {
+    panic(err)
+}
+adobeRGB, err := color.ConvertToRGBSpace(rgb, "a98-rgb")
+if err != nil {
+    panic(err)
+}
+proPhoto, err := color.ConvertToRGBSpace(rgb, "prophoto-rgb")
+if err != nil {
+    panic(err)
+}
+rec2020, err := color.ConvertToRGBSpace(rgb, "rec2020")
+if err != nil {
+    panic(err)
+}
 
 // Convert from wide-gamut RGB spaces
-fromDisplayP3, _ := color.ConvertFromRGBSpace(1.0, 0.0, 0.0, 1.0, "display-p3")
+fromDisplayP3, err := color.ConvertFromRGBSpace(1.0, 0.0, 0.0, 1.0, "display-p3")
+if err != nil {
+    panic(err)
+}
 // Now you can manipulate it in any color space
 oklch := color.ToOKLCH(fromDisplayP3)
 lightened := color.Lighten(oklch, 0.2)
@@ -79,8 +100,14 @@ lightened := color.Lighten(oklch, 0.2)
 
 ```go
 // 1. Parse colors from different formats
-color1, _ := color.ParseColor("color(display-p3 1 0 0)")
-color2, _ := color.ParseColor("color(a98-rgb 0 0 1)")
+color1, err := color.ParseColor("color(display-p3 1 0 0)")
+if err != nil {
+    panic(err)
+}
+color2, err := color.ParseColor("color(a98-rgb 0 0 1)")
+if err != nil {
+    panic(err)
+}
 
 // 2. Generate gradient in perceptually uniform space
 gradient := color.Gradient(color1, color2, 20)
@@ -88,7 +115,10 @@ gradient := color.Gradient(color1, color2, 20)
 // 3. Convert each step back to display-p3 for output
 for i, c := range gradient {
     // Convert to display-p3
-    displayP3, _ := color.ConvertToRGBSpace(c, "display-p3")
+    displayP3, err := color.ConvertToRGBSpace(c, "display-p3")
+    if err != nil {
+        panic(err)
+    }
     r, g, b, a := displayP3.RGBA()
     
     fmt.Printf("Step %d: color(display-p3 %.3f %.3f %.3f / %.2f)\n", 
@@ -131,7 +161,10 @@ for i, c := range shades {
 
 ```go
 // You have a color in display-p3
-displayP3Color, _ := color.ParseColor("color(display-p3 1 0.5 0)")
+displayP3Color, err := color.ParseColor("color(display-p3 1 0.5 0)")
+if err != nil {
+    panic(err)
+}
 
 // Convert to OKLCH for manipulation
 oklch := color.ToOKLCH(displayP3Color)
@@ -141,7 +174,10 @@ lightened := color.Lighten(oklch, 0.2)
 saturated := color.Saturate(lightened, 0.3)
 
 // Convert back to display-p3
-backToP3, _ := color.ConvertToRGBSpace(saturated, "display-p3")
+backToP3, err := color.ConvertToRGBSpace(saturated, "display-p3")
+if err != nil {
+    panic(err)
+}
 r, g, b, _ := backToP3.RGBA()
 
 // Or convert to sRGB for standard display
@@ -231,4 +267,3 @@ stops := []color.GradientStop{
 
 gradient := color.GradientMultiStopWithEasing(stops, 20, color.GradientOKLCH, middleEmphasis)
 ```
-

@@ -83,7 +83,10 @@ Apple's wide-gamut color space used in iPhone X+, iPad Pro, Mac displays, and mo
 **Gamut:** 1.26× wider than sRGB
 
 ```go
-p3, _ := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+p3, err := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+if err != nil {
+    panic(err)
+}
 
 // Or direct
 p3 := color.NewSpaceColor(color.DisplayP3Space,
@@ -554,7 +557,10 @@ gradient := color.Gradient(start, end, 20)  // Uses OKLCH internally
 **Use:** sRGB (web), Display P3 (modern devices), Rec.2020 (HDR)
 ```go
 srgb := color.RGB(1, 0, 0)
-p3, _ := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+p3, err := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+if err != nil {
+    panic(err)
+}
 ```
 
 ### For Cinema/Video

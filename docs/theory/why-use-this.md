@@ -93,13 +93,19 @@ standardLib.Convert(p3Red) // Loses vibrancy! 😢
 **Solution:**
 ```go
 // Create in Display P3
-p3Red, _ := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+p3Red, err := color.ConvertFromRGBSpace(1, 0, 0, 1, "display-p3")
+if err != nil {
+    panic(err)
+}
 
 // Operate in perceptual space
 lighter := color.Lighten(p3Red, 0.2)
 
 // Convert back to Display P3
-result, _ := color.ConvertToRGBSpace(lighter, "display-p3")
+result, err := color.ConvertToRGBSpace(lighter, "display-p3")
+if err != nil {
+    panic(err)
+}
 // Still Display P3! Still vivid! 🎉
 ```
 
@@ -123,8 +129,14 @@ result, _ := color.ConvertToRGBSpace(lighter, "display-p3")
 
 **Solution:**
 ```go
-color1 := color.ParseColor("#FF6B6B")
-color2 := color.ParseColor("#FF6D6C")
+color1, err := color.ParseColor("#FF6B6B")
+if err != nil {
+    panic(err)
+}
+color2, err := color.ParseColor("#FF6D6C")
+if err != nil {
+    panic(err)
+}
 
 // Industry-standard perceptual difference
 diff := color.DeltaE2000(color1, color2)
@@ -150,9 +162,15 @@ if diff < 1.0 {
 - **Photo Editing Software**
   ```go
   // RAW in ProPhoto RGB → Edit in OKLCH → Export to Display P3
-  raw, _ := color.ConvertFromRGBSpace(r, g, b, 1, "prophoto-rgb")
+  raw, err := color.ConvertFromRGBSpace(r, g, b, 1, "prophoto-rgb")
+  if err != nil {
+      panic(err)
+  }
   edited := color.Saturate(color.Lighten(raw, 0.1), 0.15)
-  p3, _ := color.ConvertToRGBSpace(edited, "display-p3")
+  p3, err := color.ConvertToRGBSpace(edited, "display-p3")
+  if err != nil {
+      panic(err)
+  }
   ```
 
 - **Design Tools**
@@ -237,7 +255,10 @@ if diff < 1.0 {
 
 ```go
 // Input: Brand color
-brand := color.ParseColor("#3B82F6") // Blue
+brand, err := color.ParseColor("#3B82F6") // Blue
+if err != nil {
+    panic(err)
+}
 
 // Generate full palette
 palette := struct {
@@ -310,7 +331,10 @@ func findAccessiblePair(bg Color, candidates []Color) Color {
 
 ```go
 // Start with wide gamut
-raw, _ := color.ConvertFromRGBSpace(r, g, b, 1, "prophoto-rgb")
+raw, err := color.ConvertFromRGBSpace(r, g, b, 1, "prophoto-rgb")
+if err != nil {
+    panic(err)
+}
 
 // Apply filters in perceptual space
 filtered := raw
@@ -319,7 +343,10 @@ filtered = color.Lighten(filtered, 0.05)    // Exposure
 filtered = color.AdjustHue(filtered, 10)    // Warmth
 
 // Export for target device
-p3, _ := color.ConvertToRGBSpace(filtered, "display-p3")
+p3, err := color.ConvertToRGBSpace(filtered, "display-p3")
+if err != nil {
+    panic(err)
+}
 // or
 srgb := color.MapToGamut(filtered, color.GamutProject)
 ```

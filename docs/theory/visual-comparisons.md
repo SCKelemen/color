@@ -129,7 +129,10 @@ p3Red := color(display-p3 1 0 0) // Very saturated!
 srgbRed := convertToSRGB(p3Red)  // rgb(255, 0, 0) - lost 26% of vibrancy! 😢
 
 // This library preserves it
-p3RedPreserved, _ := color.ConvertToRGBSpace(c, "display-p3") // Still vivid! 🎉
+p3RedPreserved, err := color.ConvertToRGBSpace(c, "display-p3") // Still vivid! 🎉
+if err != nil {
+    panic(err)
+}
 ```
 
 ---
@@ -246,11 +249,14 @@ oklch3 := Lighten(blue, 0.3) // Looks 30% lighter
 ### Example: Finding Similar Colors
 
 ```go
-target := color.ParseColor("#FF6B6B")
+target, err := color.ParseColor("#FF6B6B")
+if err != nil {
+    panic(err)
+}
 colors := []Color{
-    color.ParseColor("#FF6C6B"), // ΔE = 0.5  ← Almost identical
-    color.ParseColor("#FF7676"), // ΔE = 2.1  ← Small difference
-    color.ParseColor("#FF0000"), // ΔE = 12.3 ← Very different
+    mustParse("#FF6C6B"), // ΔE = 0.5  ← Almost identical
+    mustParse("#FF7676"), // ΔE = 2.1  ← Small difference
+    mustParse("#FF0000"), // ΔE = 12.3 ← Very different
 }
 
 for _, c := range colors {
@@ -357,13 +363,24 @@ Light 3: #CBE5FF  ← Too light!
 
 **After (OKLCH-based generation):**
 ```go
-base := color.ParseColor("#3B82F6")
+base, err := color.ParseColor("#3B82F6")
+if err != nil {
+    panic(err)
+}
 palette := color.Gradient(
     color.Lighten(base, 0.3),
     color.Darken(base, 0.3),
     7,
 )
 // Each step looks evenly spaced!
+
+func mustParse(s string) Color {
+    c, err := color.ParseColor(s)
+    if err != nil {
+        panic(err)
+    }
+    return c
+}
 ```
 
 ### Heatmap Colors

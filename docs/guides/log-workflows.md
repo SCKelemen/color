@@ -22,8 +22,14 @@ clog := color.NewSpaceColor(color.CLogSpace,
     []float64{0.45, 0.40, 0.35}, 1.0)
 
 // Also accessible via registry
-clog, _ := color.GetSpace("c-log")      // Primary name
-clog, _ := color.GetSpace("clog")       // Alias
+clog, ok := color.GetSpace("c-log")      // Primary name
+if !ok {
+    panic("c-log space not found")
+}
+clog, ok = color.GetSpace("clog")       // Alias
+if !ok {
+    panic("clog space not found")
+}
 ```
 
 **Key Characteristics:**
@@ -44,8 +50,14 @@ slog3 := color.NewSpaceColor(color.SLog3Space,
     []float64{0.41, 0.39, 0.35}, 1.0)
 
 // Registry access
-slog3, _ := color.GetSpace("s-log3")    // Primary name
-slog3, _ := color.GetSpace("slog3")     // Alias
+slog3, ok := color.GetSpace("s-log3")    // Primary name
+if !ok {
+    panic("s-log3 space not found")
+}
+slog3, ok = color.GetSpace("slog3")     // Alias
+if !ok {
+    panic("slog3 space not found")
+}
 ```
 
 **Key Characteristics:**
@@ -66,8 +78,14 @@ vlog := color.NewSpaceColor(color.VLogSpace,
     []float64{0.48, 0.45, 0.40}, 1.0)
 
 // Registry access
-vlog, _ := color.GetSpace("v-log")      // Primary name
-vlog, _ := color.GetSpace("vlog")       // Alias
+vlog, ok := color.GetSpace("v-log")      // Primary name
+if !ok {
+    panic("v-log space not found")
+}
+vlog, ok = color.GetSpace("vlog")       // Alias
+if !ok {
+    panic("vlog space not found")
+}
 ```
 
 **Key Characteristics:**
@@ -88,8 +106,14 @@ logc := color.NewSpaceColor(color.ArriLogCSpace,
     []float64{0.42, 0.38, 0.35}, 1.0)
 
 // Registry access
-logc, _ := color.GetSpace("arri-logc")  // Primary name
-logc, _ := color.GetSpace("logc")       // Alias
+logc, ok := color.GetSpace("arri-logc")  // Primary name
+if !ok {
+    panic("arri-logc space not found")
+}
+logc, ok = color.GetSpace("logc")       // Alias
+if !ok {
+    panic("logc space not found")
+}
 ```
 
 **Key Characteristics:**
@@ -111,8 +135,14 @@ redlog := color.NewSpaceColor(color.RedLog3G10Space,
     []float64{0.46, 0.42, 0.38}, 1.0)
 
 // Registry access
-redlog, _ := color.GetSpace("red-log3g10")  // Primary name
-redlog, _ := color.GetSpace("log3g10")      // Alias
+redlog, ok := color.GetSpace("red-log3g10")  // Primary name
+if !ok {
+    panic("red-log3g10 space not found")
+}
+redlog, ok = color.GetSpace("log3g10")      // Alias
+if !ok {
+    panic("log3g10 space not found")
+}
 ```
 
 **Key Characteristics:**
@@ -133,8 +163,14 @@ bmdfilm := color.NewSpaceColor(color.BMDFilmSpace,
     []float64{0.44, 0.40, 0.36}, 1.0)
 
 // Registry access
-bmdfilm, _ := color.GetSpace("bmd-film")    // Primary name
-bmdfilm, _ := color.GetSpace("bmdfilm")     // Alias
+bmdfilm, ok := color.GetSpace("bmd-film")    // Primary name
+if !ok {
+    panic("bmd-film space not found")
+}
+bmdfilm, ok = color.GetSpace("bmdfilm")     // Alias
+if !ok {
+    panic("bmdfilm space not found")
+}
 ```
 
 **Key Characteristics:**

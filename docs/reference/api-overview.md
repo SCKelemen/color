@@ -307,7 +307,10 @@ color.OKLABSpace        // OKLAB
 
 ```go
 // Parse a color
-blue, _ := color.ParseColor("#0000FF")
+blue, err := color.ParseColor("#0000FF")
+if err != nil {
+    panic(err)
+}
 
 // Manipulate
 lighter := color.Lighten(blue, 0.2)
@@ -328,7 +331,10 @@ p3Color := color.NewSpaceColor(color.DisplayP3Space,
 result := color.Lighten(p3Color, 0.2)
 
 // Convert back
-final, _ := color.ConvertToRGBSpace(result, "display-p3")
+final, err := color.ConvertToRGBSpace(result, "display-p3")
+if err != nil {
+    panic(err)
+}
 ```
 
 ### Gradient Generation
@@ -351,8 +357,14 @@ gradient = color.GradientMultiStop(stops, 100)
 ### Color Comparison
 
 ```go
-color1, _ := color.ParseColor("#FF0000")
-color2, _ := color.ParseColor("#FE0000")
+color1, err := color.ParseColor("#FF0000")
+if err != nil {
+    panic(err)
+}
+color2, err := color.ParseColor("#FE0000")
+if err != nil {
+    panic(err)
+}
 
 diff := color.DeltaE2000(color1, color2)
 if diff < 1.0 {
