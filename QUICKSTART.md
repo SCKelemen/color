@@ -86,7 +86,10 @@ import (
 
 func main() {
     // Your brand color
-    brandBlue := color.ParseColor("#3B82F6")
+    brandBlue, err := color.ParseColor("#3B82F6")
+    if err != nil {
+        panic(err)
+    }
 
     // Generate palette with perceptually uniform steps
     palette := map[string]string{
@@ -115,6 +118,9 @@ func main() {
     fmt.Println("}")
 }
 ```
+
+Parsing note:
+- `color(...)` RGB-space channels are validated (`>= 0`) and should be in normalized `0..1` or byte-style `0..255` form.
 
 **Output:**
 ```css

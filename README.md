@@ -95,8 +95,8 @@ result, _ := color.ConvertToRGBSpace(lighter, "display-p3")
 Industry-standard color difference metrics:
 
 ```go
-color1 := color.ParseColor("#FF6B6B")
-color2 := color.ParseColor("#FF6D6C")
+color1, _ := color.ParseColor("#FF6B6B")
+color2, _ := color.ParseColor("#FF6D6C")
 
 // How different do they look to humans?
 diff := color.DeltaE2000(color1, color2) // Industry standard
@@ -245,6 +245,10 @@ parsed, _ := color.ParseColor("hsl(0, 100%, 50%)")
 parsed, _ := color.ParseColor("oklch(0.7 0.2 30)")
 parsed, _ := color.ParseColor("color(display-p3 1 0 0)")
 ```
+
+Notes:
+- `color(...)` RGB-space channels must be non-negative and use either normalized `0..1` or byte-style `0..255` input.
+- `color.NewSpaceColor` normalizes channel count to the target space (extra channels ignored, missing channels zero-filled).
 
 ### Color Manipulation
 ```go

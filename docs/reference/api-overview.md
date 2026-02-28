@@ -41,6 +41,9 @@ color.NewHWB(h, w, b, a float64) *HWB
 color.NewSpaceColor(space Space, channels []float64, alpha float64) SpaceColor
 ```
 
+Behavior notes:
+- `NewSpaceColor` normalizes channel count to `space.Channels()` (missing values become `0`, extra values are ignored).
+
 ### Color Parsing
 
 ```go
@@ -53,6 +56,10 @@ color.ParseRGB(s string) (*RGBA, error)
 color.ParseHSL(s string) (*HSL, error)
 color.ParseOKLCH(s string) (*OKLCH, error)
 ```
+
+Validation notes:
+- `color(...)` RGB-space channel values must be non-negative.
+- Use normalized `0..1` values or byte-style `0..255` values for RGB-space channels.
 
 ### Color Manipulation
 
