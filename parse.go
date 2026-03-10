@@ -225,31 +225,7 @@ func parseNumber(s string) (float64, error) {
 // parseAngle parses a CSS angle value and returns degrees.
 // Supported units: deg, rad, turn, grad. Bare numbers are interpreted as degrees.
 func parseAngle(s string) (float64, error) {
-	token := strings.TrimSpace(strings.ToLower(s))
-	var (
-		v   float64
-		err error
-		a   units.Angle
-	)
-
-	switch {
-	case strings.HasSuffix(token, "deg"):
-		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "deg"), 64)
-		a = units.Deg(v)
-	case strings.HasSuffix(token, "grad"):
-		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "grad"), 64)
-		a = units.Grad(v)
-	case strings.HasSuffix(token, "rad"):
-		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "rad"), 64)
-		a = units.Rad(v)
-	case strings.HasSuffix(token, "turn"):
-		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "turn"), 64)
-		a = units.Turns(v)
-	default:
-		v, err = strconv.ParseFloat(token, 64)
-		a = units.Deg(v)
-	}
-
+	a, err := units.ParseAngle(s)
 	if err != nil {
 		return 0, err
 	}
