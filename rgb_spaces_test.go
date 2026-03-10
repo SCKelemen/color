@@ -6,9 +6,9 @@ import (
 
 func TestParseWideGamutRGB(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		wantErr  bool
+		name    string
+		input   string
+		wantErr bool
 	}{
 		{"Display P3", "color(display-p3 1 0 0)", false},
 		{"Display P3 with alpha", "color(display-p3 1 0 0 / 0.5)", false},
@@ -58,6 +58,30 @@ func TestRGBColorSpaceConversion(t *testing.T) {
 	}
 }
 
+func TestParseWideGamutPreservesSpaceColor(t *testing.T) {
+	c, err := ParseColor("color(display-p3 0.9 0.2 0.8)")
+	if err != nil {
+		t.Fatalf("ParseColor failed: %v", err)
+	}
+
+	sc, ok := c.(SpaceColor)
+	if !ok {
+		t.Fatalf("expected ParseColor(color(display-p3 ...)) to return SpaceColor")
+	}
+
+	if sc.Space() == nil || sc.Space().Name() != "display-p3" {
+		t.Fatalf("expected display-p3 space, got %v", sc.Space())
+	}
+
+	channels := sc.Channels()
+	if len(channels) < 3 {
+		t.Fatalf("expected at least 3 channels, got %d", len(channels))
+	}
+	if abs(channels[0]-0.9) > 0.01 || abs(channels[1]-0.2) > 0.01 || abs(channels[2]-0.8) > 0.01 {
+		t.Fatalf("expected preserved channels [0.9 0.2 0.8], got %v", channels[:3])
+	}
+}
+
 func TestSRGBLinear(t *testing.T) {
 	// sRGB-linear should handle values differently than sRGB
 	srgbLinear, err := ParseColor("color(srgb-linear 0.5 0.5 0.5)")
@@ -71,4 +95,3 @@ func TestSRGBLinear(t *testing.T) {
 		t.Errorf("sRGB-linear = RGB(%v, %v, %v, %v), want valid color", r, g, b, a)
 	}
 }
-

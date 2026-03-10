@@ -32,6 +32,21 @@ func TestConvertFromRGBSpace(t *testing.T) {
 		t.Fatalf("ConvertFromRGBSpace failed: %v", err)
 	}
 
+	sc, ok := displayP3Color.(SpaceColor)
+	if !ok {
+		t.Fatalf("ConvertFromRGBSpace should preserve source as SpaceColor")
+	}
+	if sc.Space() == nil || sc.Space().Name() != "display-p3" {
+		t.Fatalf("expected display-p3 source space, got %v", sc.Space())
+	}
+	channels := sc.Channels()
+	if len(channels) < 3 {
+		t.Fatalf("expected 3 channels, got %d", len(channels))
+	}
+	if !floatEqual(channels[0], 1.0) || !floatEqual(channels[1], 0.0) || !floatEqual(channels[2], 0.0) {
+		t.Fatalf("expected preserved display-p3 channels [1 0 0], got %v", channels[:3])
+	}
+
 	// Should be convertible to other color spaces
 	oklch := ToOKLCH(displayP3Color)
 	if oklch == nil {
@@ -68,3 +83,20 @@ func TestConvertBetweenAllSpaces(t *testing.T) {
 	}
 }
 
+func TestConvertToRGBSpaceFromSpaceColorPreservesGamutPath(t *testing.T) {
+	source := NewSpaceColor(DisplayP3Space, []float64{0.9, 0.2, 0.8}, 1.0)
+	converted, err := ConvertToRGBSpace(source, "display-p3")
+	if err != nil {
+		t.Fatalf("ConvertToRGBSpace failed: %v", err)
+	}
+
+	got := converted.Channels()
+	if len(got) < 3 {
+		t.Fatalf("expected 3 channels, got %d", len(got))
+	}
+
+	// Same-space conversion should stay close to original channels.
+	if abs(got[0]-0.9) > 0.03 || abs(got[1]-0.2) > 0.03 || abs(got[2]-0.8) > 0.03 {
+		t.Fatalf("expected near [0.9 0.2 0.8], got %v", got[:3])
+	}
+}

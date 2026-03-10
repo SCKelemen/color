@@ -41,6 +41,13 @@ func (c *XYZ) WithAlpha(alpha float64) Color {
 
 // ToXYZ converts an RGBA color to XYZ.
 func ToXYZ(c Color) *XYZ {
+	// Preserve wide-gamut precision when the source carries native space channels.
+	if sc, ok := c.(SpaceColor); ok {
+		channels := sc.Channels()
+		x, y, z := sc.Space().ToXYZ(channels)
+		return &XYZ{X: x, Y: y, Z: z, A: sc.Alpha()}
+	}
+
 	r, g, b, a := c.RGBA()
 
 	// Convert sRGB to linear RGB
@@ -71,4 +78,3 @@ func inverseGammaCorrection(srgb float64) float64 {
 	}
 	return math.Pow((srgb+0.055)/1.055, 2.4)
 }
-

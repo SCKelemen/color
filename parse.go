@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/image/colornames"
 )
 
 var (
@@ -250,12 +252,9 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 		if len(args) < 4 {
 			return nil, &ParseError{input: strings.Join(args, ","), reason: "RGBA requires 4 arguments"}
 		}
-		a, err = parseNumber(args[3])
+		a, err = parseAlpha(args[3], "RGB")
 		if err != nil {
 			return nil, err
-		}
-		if a < 0 || a > 1 {
-			return nil, &ParseError{input: args[3], reason: "RGB alpha component out of range (0-1 or 0-100%)"}
 		}
 	}
 
@@ -285,6 +284,21 @@ func parseRGBChannel(s, channel string) (float64, error) {
 		return 0, &ParseError{input: s, reason: fmt.Sprintf("RGB %s component out of range (0-255)", channel)}
 	}
 	return v / 255.0, nil
+}
+
+// parseAlpha parses an alpha component and validates it is in [0,1].
+func parseAlpha(s, model string) (float64, error) {
+	a, err := parseNumber(s)
+	if err != nil {
+		return 0, err
+	}
+	if a < 0 || a > 1 {
+		return 0, &ParseError{
+			input:  s,
+			reason: fmt.Sprintf("%s alpha component out of range (0-1 or 0-100%%)", model),
+		}
+	}
+	return a, nil
 }
 
 // parseHSL parses HSL/HSLA arguments.
@@ -332,7 +346,7 @@ func parseHSL(args []string, hasAlpha bool) (Color, error) {
 		if len(args) < 4 {
 			return nil, &ParseError{input: strings.Join(args, ","), reason: "HSLA requires 4 arguments"}
 		}
-		a, err = parseNumber(args[3])
+		a, err = parseAlpha(args[3], "HSL")
 		if err != nil {
 			return nil, err
 		}
@@ -370,12 +384,9 @@ func parseHSV(args []string, hasAlpha bool) (Color, error) {
 		if len(args) < 4 {
 			return nil, &ParseError{input: strings.Join(args, ","), reason: "HSVA requires 4 arguments"}
 		}
-		a, err = parseNumber(args[3])
+		a, err = parseAlpha(args[3], "HSV")
 		if err != nil {
 			return nil, err
-		}
-		if a < 0 || a > 1 {
-			return nil, &ParseError{input: args[3], reason: "HSV alpha component out of range (0-1 or 0-100%)"}
 		}
 	}
 
@@ -412,7 +423,7 @@ func parseLAB(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "LAB")
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +459,7 @@ func parseOKLAB(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "OKLAB")
 		if err != nil {
 			return nil, err
 		}
@@ -487,7 +498,7 @@ func parseLCH(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "LCH")
 		if err != nil {
 			return nil, err
 		}
@@ -530,7 +541,7 @@ func parseOKLCH(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "OKLCH")
 		if err != nil {
 			return nil, err
 		}
@@ -568,7 +579,7 @@ func parseHWB(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "HWB")
 		if err != nil {
 			return nil, err
 		}
@@ -622,7 +633,7 @@ func parseXYZ(args []string) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], "XYZ")
 		if err != nil {
 			return nil, err
 		}
@@ -721,21 +732,21 @@ func parseRGBColorSpace(args []string, space *RGBColorSpace) (Color, error) {
 
 	alpha := 1.0
 	if len(args) >= 4 {
-		alpha, err = parseNumber(args[3])
+		alpha, err = parseAlpha(args[3], space.Name)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// For wide-gamut color spaces, we need to convert to XYZ then to sRGB
-	// Convert the RGB values in the source color space to XYZ
-	xyz := space.ConvertRGBToXYZ(r, g, b, alpha)
-
-	// Convert XYZ to sRGB for the Color interface
-	// (All colors must be convertible to RGBA via the Color interface)
-	// We return an RGBA color that represents the closest sRGB approximation
-	r2, g2, b2, a2 := xyz.RGBA()
-	return NewRGBA(r2, g2, b2, a2), nil
+	// Preserve wide-gamut channels by returning a SpaceColor in the source space.
+	targetSpace := getSpaceByName(space.Name)
+	if targetSpace == nil {
+		return nil, &ParseError{
+			input:  space.Name,
+			reason: "unsupported RGB color space for color() function",
+		}
+	}
+	return NewSpaceColor(targetSpace, []float64{r, g, b}, alpha), nil
 }
 
 // parseNamedColor parses CSS named colors.
@@ -748,35 +759,22 @@ func parseNamedColor(s string) (Color, bool) {
 }
 
 // namedColors contains CSS named colors.
-var namedColors = map[string]Color{
-	"transparent": NewRGBA(0, 0, 0, 0),
-	"black":       RGB(0, 0, 0),
-	"white":       RGB(1, 1, 1),
-	"red":         RGB(1, 0, 0),
-	"green":       RGB(0, 0.5, 0), // CSS green is #008000
-	"blue":        RGB(0, 0, 1),
-	"yellow":      RGB(1, 1, 0),
-	"cyan":        RGB(0, 1, 1),
-	"magenta":     RGB(1, 0, 1),
-	"orange":      RGB(1, 0.647, 0), // #FFA500
-	"purple":      RGB(0.5, 0, 0.5),
-	"pink":        RGB(1, 0.753, 0.796),     // #FFC0CB
-	"brown":       RGB(0.647, 0.165, 0.165), // #A52A2A
-	"gray":        RGB(0.5, 0.5, 0.5),
-	"grey":        RGB(0.5, 0.5, 0.5),
-	"lime":        RGB(0, 1, 0),
-	"navy":        RGB(0, 0, 0.5),
-	"olive":       RGB(0.5, 0.5, 0),
-	"teal":        RGB(0, 0.5, 0.5),
-	"aqua":        RGB(0, 1, 1),
-	"fuchsia":     RGB(1, 0, 1),
-	"maroon":      RGB(0.5, 0, 0),
-	"silver":      RGB(0.753, 0.753, 0.753),
-	"darkred":     RGB(0.545, 0, 0),
-	"darkgreen":   RGB(0, 0.392, 0),
-	"darkblue":    RGB(0, 0, 0.545),
-	"darkgray":    RGB(0.663, 0.663, 0.663),
-	"darkgrey":    RGB(0.663, 0.663, 0.663),
-	"lightgray":   RGB(0.827, 0.827, 0.827),
-	"lightgrey":   RGB(0.827, 0.827, 0.827),
+var namedColors = loadNamedColors()
+
+func loadNamedColors() map[string]Color {
+	colors := make(map[string]Color, len(colornames.Map)+2)
+	for name, c := range colornames.Map {
+		colors[name] = NewRGBA(
+			float64(c.R)/255.0,
+			float64(c.G)/255.0,
+			float64(c.B)/255.0,
+			1.0,
+		)
+	}
+
+	// CSS Color Module Level 4 additions/special keywords.
+	colors["rebeccapurple"] = NewRGBA(102.0/255.0, 51.0/255.0, 153.0/255.0, 1.0)
+	colors["transparent"] = NewRGBA(0, 0, 0, 0)
+
+	return colors
 }

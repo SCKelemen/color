@@ -48,7 +48,8 @@ func TestParseColor(t *testing.T) {
 		// Named colors
 		{"Named red", "red", [4]float64{1, 0, 0, 1}, false},
 		{"Named blue", "blue", [4]float64{0, 0, 1, 1}, false},
-		{"Named green", "green", [4]float64{0, 0.5, 0, 1}, false},
+		{"Named green", "green", [4]float64{0, 128.0 / 255.0, 0, 1}, false},
+		{"Named rebeccapurple", "rebeccapurple", [4]float64{102.0 / 255.0, 51.0 / 255.0, 153.0 / 255.0, 1}, false},
 		{"Named transparent", "transparent", [4]float64{0, 0, 0, 0}, false},
 
 		// Errors
@@ -165,11 +166,13 @@ func TestParseNamedColors(t *testing.T) {
 		expected [4]float64
 	}{
 		{"red", "red", [4]float64{1, 0, 0, 1}},
-		{"green", "green", [4]float64{0, 0.5, 0, 1}},
+		{"green", "green", [4]float64{0, 128.0 / 255.0, 0, 1}},
 		{"blue", "blue", [4]float64{0, 0, 1, 1}},
 		{"transparent", "transparent", [4]float64{0, 0, 0, 0}},
 		{"white", "white", [4]float64{1, 1, 1, 1}},
 		{"black", "black", [4]float64{0, 0, 0, 1}},
+		{"rebeccapurple", "rebeccapurple", [4]float64{102.0 / 255.0, 51.0 / 255.0, 153.0 / 255.0, 1}},
+		{"aliceblue", "aliceblue", [4]float64{240.0 / 255.0, 248.0 / 255.0, 1, 1}},
 	}
 
 	for _, tt := range tests {

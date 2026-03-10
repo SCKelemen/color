@@ -302,6 +302,31 @@ func TestParseHSVAlphaInHSVFunction(t *testing.T) {
 	}
 }
 
+func TestParseColorRejectsOutOfRangeAlphaAcrossFormats(t *testing.T) {
+	inputs := []string{
+		"hsla(0, 100%, 50%, 1.1)",
+		"hsl(0 100% 50% / 120%)",
+		"hsv(0, 100%, 100%, -0.1)",
+		"hsva(0, 100%, 100%, 1.2)",
+		"lab(50 20 30 / 101%)",
+		"oklab(0.5 0.1 0.2 1.2)",
+		"lch(70 40 180 -0.1)",
+		"oklch(0.7 0.2 120 200%)",
+		"hwb(120 20% 30% / 1.5)",
+		"xyz(0.2 0.3 0.4 / -0.2)",
+		"color(display-p3 0.2 0.3 0.4 / 1.3)",
+		"color(xyz 0.2 0.3 0.4 / 150%)",
+	}
+
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			if _, err := ParseColor(input); err == nil {
+				t.Fatalf("expected ParseColor(%q) to fail for out-of-range alpha", input)
+			}
+		})
+	}
+}
+
 func TestParseColorBoundaryValues(t *testing.T) {
 	boundary := []string{
 		"rgb(0, 0, 0)",         // Min

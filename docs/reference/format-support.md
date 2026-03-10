@@ -15,7 +15,7 @@ This document details which CSS color formats are supported and which are not ye
   - Legacy: `hsl(0, 100%, 50%)`, `hsla(0, 100%, 50%, 0.5)`
   - Modern: `hsl(0 100% 50%)`, `hsl(0 100% 50% / 0.5)`
 - ✅ **HWB**: `hwb(0 0% 0%)`, `hwb(0 0% 0% / 0.5)`
-- ✅ **Named Colors**: `red`, `blue`, `transparent`, etc. (basic set)
+- ✅ **Named Colors**: Full CSS named color set (including `rebeccapurple`) plus `transparent`
 
 ### CIE Color Spaces
 - ✅ **CIE LAB** (1976 L*a*b*): `lab(50 20 30)`, `lab(50% 20 30)`
@@ -32,7 +32,6 @@ This document details which CSS color formats are supported and which are not ye
 ## ❌ Not Yet Supported
 
 ### Other Missing Features
-- ❌ **Extended named colors**: Only basic CSS named colors are supported (not the full CSS Color Module Level 4 extended set of 148 named colors)
 - ❌ **Device-specific color spaces**: `device-cmyk()` and similar device-dependent spaces
 - ❌ **Color interpolation hints**: CSS Color Module Level 5 features for color mixing
 
@@ -51,7 +50,6 @@ This document details which CSS color formats are supported and which are not ye
   - ✅ srgb-linear (linear sRGB)
 
 **What we don't support yet:**
-- ❌ Full extended named color set (148 colors - we have ~25 basic ones)
 - ❌ Device-specific color spaces (device-cmyk, etc.)
 
 ## Coverage Estimate
