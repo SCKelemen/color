@@ -33,7 +33,7 @@ func TestParseColor(t *testing.T) {
 		{"HSVA", "hsva(240, 100%, 100%, 0.5)", [4]float64{0, 0, 1, 0.5}, false},
 
 		// LAB (approximate - just check it's valid)
-		{"LAB", "lab(50 20 30)", [4]float64{0, 0, 0, 1}, false}, // Will validate separately
+		{"LAB", "lab(50 20 30)", [4]float64{0, 0, 0, 1}, false},             // Will validate separately
 		{"LAB percentage", "lab(50% 20 30)", [4]float64{0, 0, 0, 1}, false}, // Will validate separately
 
 		// OKLAB (approximate - just check it's valid)
@@ -72,7 +72,7 @@ func TestParseColor(t *testing.T) {
 					strings.Contains(strings.ToLower(tt.input), "lch") ||
 					strings.Contains(strings.ToLower(tt.input), "oklab") ||
 					strings.Contains(strings.ToLower(tt.input), "oklch")
-				
+
 				if isApproximateFormat {
 					// For approximate matches, just check it's a valid color
 					if r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1 || a < 0 || a > 1 {
@@ -102,6 +102,7 @@ func TestParseRGB(t *testing.T) {
 		expected [4]float64
 	}{
 		{"RGB integers", "rgb(255, 128, 0)", [4]float64{1, 128.0 / 255.0, 0, 1}},
+		{"RGB low integers are byte scale", "rgb(1, 0, 0)", [4]float64{1.0 / 255.0, 0, 0, 1}},
 		{"RGB percentages", "rgb(100%, 50%, 0%)", [4]float64{1, 0.5, 0, 1}},
 		{"RGBA", "rgba(255, 128, 0, 0.5)", [4]float64{1, 128.0 / 255.0, 0, 0.5}},
 	}
@@ -212,4 +213,3 @@ func TestParseColorRoundTrip(t *testing.T) {
 		})
 	}
 }
-

@@ -231,48 +231,17 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "RGB requires at least 3 arguments"}
 	}
 
-	r, err := parseNumber(args[0])
+	r, err := parseRGBChannel(args[0], "red")
 	if err != nil {
 		return nil, err
 	}
-	// Validate range before conversion
-	if r < 0 {
-		return nil, &ParseError{input: args[0], reason: "RGB red component cannot be negative"}
-	}
-	// If > 1, assume 0-255 range, validate and convert to 0-1
-	if r > 1 {
-		if r > 255 {
-			return nil, &ParseError{input: args[0], reason: "RGB red component out of range (0-255)"}
-		}
-		r = r / 255.0
-	}
-
-	g, err := parseNumber(args[1])
+	g, err := parseRGBChannel(args[1], "green")
 	if err != nil {
 		return nil, err
 	}
-	if g < 0 {
-		return nil, &ParseError{input: args[1], reason: "RGB green component cannot be negative"}
-	}
-	if g > 1 {
-		if g > 255 {
-			return nil, &ParseError{input: args[1], reason: "RGB green component out of range (0-255)"}
-		}
-		g = g / 255.0
-	}
-
-	b, err := parseNumber(args[2])
+	b, err := parseRGBChannel(args[2], "blue")
 	if err != nil {
 		return nil, err
-	}
-	if b < 0 {
-		return nil, &ParseError{input: args[2], reason: "RGB blue component cannot be negative"}
-	}
-	if b > 1 {
-		if b > 255 {
-			return nil, &ParseError{input: args[2], reason: "RGB blue component out of range (0-255)"}
-		}
-		b = b / 255.0
 	}
 
 	var a float64 = 1.0
@@ -285,10 +254,37 @@ func parseRGB(args []string, hasAlpha bool) (Color, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Alpha is always 0-1, not 0-255
+		if a < 0 || a > 1 {
+			return nil, &ParseError{input: args[3], reason: "RGB alpha component out of range (0-1 or 0-100%)"}
+		}
 	}
 
 	return NewRGBA(r, g, b, a), nil
+}
+
+// parseRGBChannel parses an RGB channel using CSS rgb() semantics:
+// numeric values are [0,255], percentages are [0,100%].
+func parseRGBChannel(s, channel string) (float64, error) {
+	token := strings.TrimSpace(strings.ToLower(s))
+	if strings.HasSuffix(token, "%") {
+		v, err := parseNumber(token)
+		if err != nil {
+			return 0, err
+		}
+		if v < 0 || v > 1 {
+			return 0, &ParseError{input: s, reason: fmt.Sprintf("RGB %s component out of range (0-100%%)", channel)}
+		}
+		return v, nil
+	}
+
+	v, err := strconv.ParseFloat(token, 64)
+	if err != nil {
+		return 0, err
+	}
+	if v < 0 || v > 255 {
+		return 0, &ParseError{input: s, reason: fmt.Sprintf("RGB %s component out of range (0-255)", channel)}
+	}
+	return v / 255.0, nil
 }
 
 // parseHSL parses HSL/HSLA arguments.
@@ -347,6 +343,9 @@ func parseHSL(args []string, hasAlpha bool) (Color, error) {
 
 // parseHSV parses HSV/HSVA arguments.
 func parseHSV(args []string, hasAlpha bool) (Color, error) {
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSV/HSVA requires at most 4 arguments"}
+	}
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSV requires at least 3 arguments"}
 	}
@@ -367,13 +366,16 @@ func parseHSV(args []string, hasAlpha bool) (Color, error) {
 	}
 
 	var a float64 = 1.0
-	if hasAlpha {
+	if hasAlpha || len(args) >= 4 {
 		if len(args) < 4 {
 			return nil, &ParseError{input: strings.Join(args, ","), reason: "HSVA requires 4 arguments"}
 		}
 		a, err = parseNumber(args[3])
 		if err != nil {
 			return nil, err
+		}
+		if a < 0 || a > 1 {
+			return nil, &ParseError{input: args[3], reason: "HSV alpha component out of range (0-1 or 0-100%)"}
 		}
 	}
 
@@ -384,6 +386,9 @@ func parseHSV(args []string, hasAlpha bool) (Color, error) {
 func parseLAB(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "LAB requires 3 arguments"}
+	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "LAB requires at most 4 arguments"}
 	}
 
 	l, err := parseNumber(args[0])
@@ -421,6 +426,9 @@ func parseOKLAB(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "OKLAB requires 3 arguments"}
 	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "OKLAB requires at most 4 arguments"}
+	}
 
 	l, err := parseNumber(args[0])
 	if err != nil {
@@ -453,6 +461,9 @@ func parseOKLAB(args []string) (Color, error) {
 func parseLCH(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "LCH requires 3 arguments"}
+	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "LCH requires at most 4 arguments"}
 	}
 
 	l, err := parseNumber(args[0])
@@ -489,6 +500,9 @@ func parseLCH(args []string) (Color, error) {
 func parseOKLCH(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "OKLCH requires 3 arguments"}
+	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, ","), reason: "OKLCH requires at most 4 arguments"}
 	}
 
 	l, err := parseNumber(args[0])
@@ -529,6 +543,9 @@ func parseOKLCH(args []string) (Color, error) {
 func parseHWB(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, " "), reason: "HWB requires at least 3 arguments"}
+	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, " "), reason: "HWB requires at most 4 arguments"}
 	}
 
 	h, err := parseNumber(args[0])
@@ -583,6 +600,9 @@ func parseHWB(args []string) (Color, error) {
 func parseXYZ(args []string) (Color, error) {
 	if len(args) < 3 {
 		return nil, &ParseError{input: strings.Join(args, " "), reason: "XYZ requires 3 arguments"}
+	}
+	if len(args) > 4 {
+		return nil, &ParseError{input: strings.Join(args, " "), reason: "XYZ requires at most 4 arguments"}
 	}
 
 	x, err := parseNumber(args[0])

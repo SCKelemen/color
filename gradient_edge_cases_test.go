@@ -74,6 +74,63 @@ func TestGradientMultiStopEmpty(t *testing.T) {
 	}
 }
 
+func TestGradientMultiStopSingleStepReturnsStartColor(t *testing.T) {
+	stops := []GradientStop{
+		{Color: RGB(0, 0, 1), Position: 1.0},
+		{Color: RGB(1, 0, 0), Position: 0.2},
+	}
+
+	gradient := GradientMultiStop(stops, 1, GradientOKLCH)
+	if len(gradient) != 1 {
+		t.Fatalf("Expected 1 color, got %d", len(gradient))
+	}
+
+	r, g, b, _ := gradient[0].RGBA()
+	if math.Abs(r-1.0) > 0.01 || g > 0.05 || b > 0.05 {
+		t.Errorf("Expected start color (red-ish), got (%f, %f, %f)", r, g, b)
+	}
+}
+
+func TestGradientMultiStopWithEasingSingleStepReturnsStartColor(t *testing.T) {
+	stops := []GradientStop{
+		{Color: RGB(1, 0, 0), Position: 0.0},
+		{Color: RGB(0, 0, 1), Position: 1.0},
+	}
+
+	gradient := GradientMultiStopWithEasing(stops, 1, GradientOKLCH, EaseInQuad)
+	if len(gradient) != 1 {
+		t.Fatalf("Expected 1 color, got %d", len(gradient))
+	}
+
+	r, g, b, _ := gradient[0].RGBA()
+	if math.Abs(r-1.0) > 0.01 || g > 0.05 || b > 0.05 {
+		t.Errorf("Expected start color (red-ish), got (%f, %f, %f)", r, g, b)
+	}
+}
+
+func TestGradientMultiStopNegativeSteps(t *testing.T) {
+	stops := []GradientStop{
+		{Color: RGB(1, 0, 0), Position: 0.0},
+		{Color: RGB(0, 0, 1), Position: 1.0},
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Expected no panic for negative steps, got: %v", r)
+		}
+	}()
+
+	gradient := GradientMultiStop(stops, -3, GradientOKLCH)
+	if len(gradient) != 0 {
+		t.Errorf("Expected empty gradient for negative steps, got %d colors", len(gradient))
+	}
+
+	gradientEased := GradientMultiStopWithEasing(stops, -3, GradientOKLCH, EaseLinear)
+	if len(gradientEased) != 0 {
+		t.Errorf("Expected empty eased gradient for negative steps, got %d colors", len(gradientEased))
+	}
+}
+
 func TestGradientMultiStopSingle(t *testing.T) {
 	// Single stop
 	stops := []GradientStop{

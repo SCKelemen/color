@@ -8,15 +8,15 @@ import (
 
 func TestParseColorMalformedHex(t *testing.T) {
 	malformed := []string{
-		"#GG0000",        // Invalid hex digit
-		"#12345",         // Wrong length
-		"#1234567",       // Wrong length
-		"##FF0000",       // Double hash
-		"FF00GG",         // Invalid digit without hash
-		"",               // Empty string
-		"#",              // Just hash
-		"notacolor",      // Random string
-		"#ZZZZZZ",        // All invalid digits
+		"#GG0000",   // Invalid hex digit
+		"#12345",    // Wrong length
+		"#1234567",  // Wrong length
+		"##FF0000",  // Double hash
+		"FF00GG",    // Invalid digit without hash
+		"",          // Empty string
+		"#",         // Just hash
+		"notacolor", // Random string
+		"#ZZZZZZ",   // All invalid digits
 	}
 
 	for _, input := range malformed {
@@ -29,16 +29,16 @@ func TestParseColorMalformedHex(t *testing.T) {
 
 func TestParseColorValidHexFormats(t *testing.T) {
 	valid := map[string][3]float64{
-		"#F00":     {1.0, 0, 0},       // Short form red
-		"#FF0000":  {1.0, 0, 0},       // Long form red
-		"#00FF00":  {0, 1.0, 0},       // Green
-		"#0000FF":  {0, 0, 1.0},       // Blue
-		"#FFF":     {1.0, 1.0, 1.0},   // White short
-		"#FFFFFF":  {1.0, 1.0, 1.0},   // White long
-		"#000":     {0, 0, 0},         // Black short
-		"#000000":  {0, 0, 0},         // Black long
-		"FF0000":   {1.0, 0, 0},       // Without hash
-		"F00":      {1.0, 0, 0},       // Short without hash
+		"#F00":    {1.0, 0, 0},     // Short form red
+		"#FF0000": {1.0, 0, 0},     // Long form red
+		"#00FF00": {0, 1.0, 0},     // Green
+		"#0000FF": {0, 0, 1.0},     // Blue
+		"#FFF":    {1.0, 1.0, 1.0}, // White short
+		"#FFFFFF": {1.0, 1.0, 1.0}, // White long
+		"#000":    {0, 0, 0},       // Black short
+		"#000000": {0, 0, 0},       // Black long
+		"FF0000":  {1.0, 0, 0},     // Without hash
+		"F00":     {1.0, 0, 0},     // Short without hash
 	}
 
 	for input, expected := range valid {
@@ -58,14 +58,14 @@ func TestParseColorValidHexFormats(t *testing.T) {
 
 func TestParseColorRGBMalformed(t *testing.T) {
 	malformed := []string{
-		"rgb()",                      // Empty
-		"rgb(255)",                   // Missing components
-		"rgb(255, 128)",              // Missing component
-		"rgb(255, 128, 64, 128, 0)",  // Too many components (>4)
-		"rgb(256, 128, 64)",          // Out of range
-		"rgb(-1, 128, 64)",           // Negative
-		"rgb(a, b, c)",               // Non-numeric
-		"rgb(255, , 64)",             // Empty component
+		"rgb()",                     // Empty
+		"rgb(255)",                  // Missing components
+		"rgb(255, 128)",             // Missing component
+		"rgb(255, 128, 64, 128, 0)", // Too many components (>4)
+		"rgb(256, 128, 64)",         // Out of range
+		"rgb(-1, 128, 64)",          // Negative
+		"rgb(a, b, c)",              // Non-numeric
+		"rgb(255, , 64)",            // Empty component
 	}
 
 	for _, input := range malformed {
@@ -78,14 +78,14 @@ func TestParseColorRGBMalformed(t *testing.T) {
 
 func TestParseColorHSLMalformed(t *testing.T) {
 	malformed := []string{
-		"hsl()",                         // Empty
-		"hsl(180)",                      // Missing components
-		"hsl(180, 50%)",                 // Missing component
-		"hsl(180, 50%, 50%, 50%, 50%)",  // Too many components (>4)
-		"hsl(400, 50%, 50%)",            // Hue out of range
-		"hsl(180, 150%, 50%)",           // Saturation out of range
-		"hsl(180, 50%, 150%)",           // Lightness out of range
-		"hsl(abc, 50%, 50%)",            // Non-numeric hue
+		"hsl()",                        // Empty
+		"hsl(180)",                     // Missing components
+		"hsl(180, 50%)",                // Missing component
+		"hsl(180, 50%, 50%, 50%, 50%)", // Too many components (>4)
+		"hsl(400, 50%, 50%)",           // Hue out of range
+		"hsl(180, 150%, 50%)",          // Saturation out of range
+		"hsl(180, 50%, 150%)",          // Lightness out of range
+		"hsl(abc, 50%, 50%)",           // Non-numeric hue
 	}
 
 	for _, input := range malformed {
@@ -98,12 +98,12 @@ func TestParseColorHSLMalformed(t *testing.T) {
 
 func TestParseColorOKLCHMalformed(t *testing.T) {
 	malformed := []string{
-		"oklch()",                    // Empty
-		"oklch(0.5)",                 // Missing components
-		"oklch(0.5, 0.2)",            // Missing component
-		"oklch(2.0 0.2 180)",         // Lightness out of range
-		"oklch(0.5 -0.1 180)",        // Negative chroma
-		"oklch(a b c)",               // Non-numeric
+		"oklch()",             // Empty
+		"oklch(0.5)",          // Missing components
+		"oklch(0.5, 0.2)",     // Missing component
+		"oklch(2.0 0.2 180)",  // Lightness out of range
+		"oklch(0.5 -0.1 180)", // Negative chroma
+		"oklch(a b c)",        // Non-numeric
 	}
 
 	for _, input := range malformed {
@@ -139,11 +139,11 @@ func TestParseColorCaseSensitivity(t *testing.T) {
 func TestParseColorWhitespace(t *testing.T) {
 	// Test various whitespace scenarios
 	withWhitespace := []string{
-		" rgb(255, 0, 0) ",           // Leading/trailing spaces
-		"rgb( 255 , 0 , 0 )",         // Extra spaces
-		"rgb(255,0,0)",                // No spaces
-		"  #FF0000  ",                 // Spaces around hex
-		"hsl(180 , 50% , 50%)",       // Mixed spacing
+		" rgb(255, 0, 0) ",     // Leading/trailing spaces
+		"rgb( 255 , 0 , 0 )",   // Extra spaces
+		"rgb(255,0,0)",         // No spaces
+		"  #FF0000  ",          // Spaces around hex
+		"hsl(180 , 50% , 50%)", // Mixed spacing
 	}
 
 	for _, input := range withWhitespace {
@@ -189,12 +189,12 @@ func TestParseColorHexAlpha(t *testing.T) {
 		input         string
 		expectedAlpha float64
 	}{
-		{"#FF0000FF", 1.0},     // Full alpha
-		{"#FF000080", 0.5},     // Half alpha (128/255)
-		{"#FF000000", 0.0},     // Zero alpha
-		{"#F00F", 1.0},         // Short form full alpha
-		{"#F008", 0.53},        // Short form half alpha (8/15 ≈ 0.53)
-		{"#F000", 0.0},         // Short form zero alpha
+		{"#FF0000FF", 1.0}, // Full alpha
+		{"#FF000080", 0.5}, // Half alpha (128/255)
+		{"#FF000000", 0.0}, // Zero alpha
+		{"#F00F", 1.0},     // Short form full alpha
+		{"#F008", 0.53},    // Short form half alpha (8/15 ≈ 0.53)
+		{"#F000", 0.0},     // Short form zero alpha
 	}
 
 	for _, tt := range tests {
@@ -222,8 +222,8 @@ func TestHexToRGBRoundTrip(t *testing.T) {
 		{"#000000"},
 		{"#FF8800"},
 		{"#8800FF"},
-		{"#F08"},  // Short form
-		{"#ABC"},  // Short form
+		{"#F08"}, // Short form
+		{"#ABC"}, // Short form
 	}
 
 	for _, tc := range colors {
@@ -257,11 +257,11 @@ func TestHexToRGBRoundTrip(t *testing.T) {
 
 func TestParseColorUnknownFormats(t *testing.T) {
 	unknown := []string{
-		"cmyk(0, 100, 100, 0)",       // Unsupported format
-		"device-cmyk(0, 1, 1, 0)",    // Unsupported format
-		"random string",               // Random text
-		"12345",                       // Just numbers
-		"color",                       // Keyword without value
+		"cmyk(0, 100, 100, 0)",    // Unsupported format
+		"device-cmyk(0, 1, 1, 0)", // Unsupported format
+		"random string",           // Random text
+		"12345",                   // Just numbers
+		"color",                   // Keyword without value
 	}
 
 	for _, input := range unknown {
@@ -272,14 +272,44 @@ func TestParseColorUnknownFormats(t *testing.T) {
 	}
 }
 
+func TestParseColorRejectsExtraArgsInScientificSpaces(t *testing.T) {
+	inputs := []string{
+		"lab(50 20 30 0.5 99)",
+		"oklab(0.5 0.1 0.2 0.5 99)",
+		"lch(70 40 180 0.5 99)",
+		"oklch(0.7 0.2 120 0.5 99)",
+		"hwb(120 20% 30% 0.5 99)",
+		"xyz(0.2 0.3 0.4 0.5 99)",
+	}
+
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			if _, err := ParseColor(input); err == nil {
+				t.Fatalf("expected ParseColor(%q) to fail for extra arguments", input)
+			}
+		})
+	}
+}
+
+func TestParseHSVAlphaInHSVFunction(t *testing.T) {
+	c, err := ParseColor("hsv(0, 100%, 100%, 0.5)")
+	if err != nil {
+		t.Fatalf("ParseColor returned error: %v", err)
+	}
+
+	if got := c.Alpha(); abs(got-0.5) > 0.01 {
+		t.Fatalf("expected alpha 0.5, got %f", got)
+	}
+}
+
 func TestParseColorBoundaryValues(t *testing.T) {
 	boundary := []string{
-		"rgb(0, 0, 0)",              // Min
-		"rgb(255, 255, 255)",        // Max
-		"hsl(0, 0%, 0%)",            // HSL min
-		"hsl(359, 100%, 100%)",      // HSL max
-		"oklch(0 0 0)",              // OKLCH min
-		"oklch(1 0.4 359)",          // OKLCH near max
+		"rgb(0, 0, 0)",         // Min
+		"rgb(255, 255, 255)",   // Max
+		"hsl(0, 0%, 0%)",       // HSL min
+		"hsl(359, 100%, 100%)", // HSL max
+		"oklch(0 0 0)",         // OKLCH min
+		"oklch(1 0.4 359)",     // OKLCH near max
 	}
 
 	for _, input := range boundary {
@@ -301,7 +331,7 @@ func TestParseColorNamedColors(t *testing.T) {
 	// If named colors are supported
 	named := map[string][3]float64{
 		"red":   {1.0, 0, 0},
-		"green": {0, 0.5, 0},   // CSS green is not pure green
+		"green": {0, 0.5, 0}, // CSS green is not pure green
 		"blue":  {0, 0, 1.0},
 		"white": {1.0, 1.0, 1.0},
 		"black": {0, 0, 0},

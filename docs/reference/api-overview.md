@@ -99,13 +99,13 @@ color.MixOKLCH(c1, c2 Color, weight float64) Color
 color.Gradient(start, end Color, steps int) []Color
 
 // Multi-stop gradient
-color.GradientMultiStop(stops []GradientStop, steps int) []Color
+color.GradientMultiStop(stops []GradientStop, steps int, space GradientSpace) []Color
 
 // With easing
-color.GradientWithEasing(start, end Color, steps int, easing Easing) []Color
+color.GradientWithEasing(start, end Color, steps int, space GradientSpace, easing EasingFunction) []Color
 
 // In specific color space
-color.GradientInSpace(start, end Color, steps int, space string) ([]Color, error)
+color.GradientInSpace(start, end Color, steps int, space GradientSpace) []Color
 ```
 
 ### Color Difference
@@ -248,12 +248,19 @@ const (
 ### Easing Functions
 
 ```go
-const (
-    EasingLinear        Easing = iota
-    EasingEaseIn
-    EasingEaseOut
-    EasingEaseInOut
-    EasingSmoothstep
+type EasingFunction func(t float64) float64
+
+var (
+    EaseLinear      EasingFunction
+    EaseInQuad      EasingFunction
+    EaseOutQuad     EasingFunction
+    EaseInOutQuad   EasingFunction
+    EaseInCubic     EasingFunction
+    EaseOutCubic    EasingFunction
+    EaseInOutCubic  EasingFunction
+    EaseInSine      EasingFunction
+    EaseOutSine     EasingFunction
+    EaseInOutSine   EasingFunction
 )
 ```
 
@@ -347,11 +354,11 @@ gradient := color.Gradient(start, end, 20)
 
 // Multi-stop with easing
 stops := []color.GradientStop{
-    {Pos: 0.0, Color: color.RGB(1, 0, 0)},
-    {Pos: 0.5, Color: color.RGB(0, 1, 0)},
-    {Pos: 1.0, Color: color.RGB(0, 0, 1)},
+    {Position: 0.0, Color: color.RGB(1, 0, 0)},
+    {Position: 0.5, Color: color.RGB(0, 1, 0)},
+    {Position: 1.0, Color: color.RGB(0, 0, 1)},
 }
-gradient = color.GradientMultiStop(stops, 100)
+gradient = color.GradientMultiStop(stops, 100, color.GradientOKLCH)
 ```
 
 ### Color Comparison

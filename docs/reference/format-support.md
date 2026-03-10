@@ -10,6 +10,7 @@ This document details which CSS color formats are supported and which are not ye
   - Legacy: `rgb(255, 0, 0)`, `rgba(255, 0, 0, 0.5)`
   - Modern: `rgb(255 0 0)`, `rgb(255 0 0 / 0.5)`
   - Percentages: `rgb(100%, 0%, 0%)`
+  - Numeric channels follow CSS byte semantics (`0..255`), percentages follow `0..100%`
 - ✅ **HSL/HSLA**:
   - Legacy: `hsl(0, 100%, 50%)`, `hsla(0, 100%, 50%, 0.5)`
   - Modern: `hsl(0 100% 50%)`, `hsl(0 100% 50% / 0.5)`
@@ -60,4 +61,3 @@ This document details which CSS color formats are supported and which are not ye
 - **CSS Color Module Level 5**: ~85% complete (serialization features not applicable to parsing)
 
 The library now covers **all commonly used CSS color formats**, including all wide-gamut RGB color spaces!
-

@@ -171,6 +171,9 @@ type GradientStop struct {
 //	}
 //	gradient := color.GradientMultiStop(stops, 20, color.GradientOKLCH)
 func GradientMultiStop(stops []GradientStop, steps int, space GradientSpace) []Color {
+	if steps <= 0 {
+		return []Color{}
+	}
 	if len(stops) == 0 {
 		return []Color{}
 	}
@@ -182,20 +185,9 @@ func GradientMultiStop(stops []GradientStop, steps int, space GradientSpace) []C
 		return result
 	}
 
-	// Sort stops by position
-	sortedStops := make([]GradientStop, len(stops))
-	copy(sortedStops, stops)
-	sort.Slice(sortedStops, func(i, j int) bool {
-		return sortedStops[i].Position < sortedStops[j].Position
-	})
-
-	// Ensure first stop is at 0 and last is at 1
-	if sortedStops[0].Position > 0 {
-		sortedStops = append([]GradientStop{{Color: sortedStops[0].Color, Position: 0}}, sortedStops...)
-	}
-	if sortedStops[len(sortedStops)-1].Position < 1 {
-		lastColor := sortedStops[len(sortedStops)-1].Color
-		sortedStops = append(sortedStops, GradientStop{Color: lastColor, Position: 1})
+	sortedStops := normalizeGradientStops(stops)
+	if steps == 1 {
+		return []Color{interpolateMultiStop(sortedStops, 0, space)}
 	}
 
 	result := make([]Color, steps)
@@ -336,6 +328,9 @@ func GradientWithEasing(start, end Color, steps int, space GradientSpace, easing
 // GradientMultiStopWithEasing generates a multistop gradient with easing applied.
 // The easing function is applied to the overall gradient progress.
 func GradientMultiStopWithEasing(stops []GradientStop, steps int, space GradientSpace, easing EasingFunction) []Color {
+	if steps <= 0 {
+		return []Color{}
+	}
 	if len(stops) == 0 {
 		return []Color{}
 	}
@@ -351,20 +346,9 @@ func GradientMultiStopWithEasing(stops []GradientStop, steps int, space Gradient
 		easing = EaseLinear
 	}
 
-	// Sort stops by position
-	sortedStops := make([]GradientStop, len(stops))
-	copy(sortedStops, stops)
-	sort.Slice(sortedStops, func(i, j int) bool {
-		return sortedStops[i].Position < sortedStops[j].Position
-	})
-
-	// Ensure first stop is at 0 and last is at 1
-	if sortedStops[0].Position > 0 {
-		sortedStops = append([]GradientStop{{Color: sortedStops[0].Color, Position: 0}}, sortedStops...)
-	}
-	if sortedStops[len(sortedStops)-1].Position < 1 {
-		lastColor := sortedStops[len(sortedStops)-1].Color
-		sortedStops = append(sortedStops, GradientStop{Color: lastColor, Position: 1})
+	sortedStops := normalizeGradientStops(stops)
+	if steps == 1 {
+		return []Color{interpolateMultiStop(sortedStops, easing(0), space)}
 	}
 
 	result := make([]Color, steps)
@@ -375,6 +359,25 @@ func GradientMultiStopWithEasing(stops []GradientStop, steps int, space Gradient
 	}
 
 	return result
+}
+
+// normalizeGradientStops sorts stops and guarantees endpoints at 0 and 1.
+func normalizeGradientStops(stops []GradientStop) []GradientStop {
+	sortedStops := make([]GradientStop, len(stops))
+	copy(sortedStops, stops)
+	sort.Slice(sortedStops, func(i, j int) bool {
+		return sortedStops[i].Position < sortedStops[j].Position
+	})
+
+	if sortedStops[0].Position > 0 {
+		sortedStops = append([]GradientStop{{Color: sortedStops[0].Color, Position: 0}}, sortedStops...)
+	}
+	if sortedStops[len(sortedStops)-1].Position < 1 {
+		lastColor := sortedStops[len(sortedStops)-1].Color
+		sortedStops = append(sortedStops, GradientStop{Color: lastColor, Position: 1})
+	}
+
+	return sortedStops
 }
 
 // interpolateHue interpolates hue using the specified interpolation method.
@@ -414,4 +417,3 @@ func interpolateHue(h1, h2, weight float64, method HueInterpolation) float64 {
 
 	return normalizeHue(h1 + dh*weight)
 }
-
