@@ -14,13 +14,14 @@ This document details which CSS color formats are supported and which are not ye
 - ✅ **HSL/HSLA**:
   - Legacy: `hsl(0, 100%, 50%)`, `hsla(0, 100%, 50%, 0.5)`
   - Modern: `hsl(0 100% 50%)`, `hsl(0 100% 50% / 0.5)`
+  - Hue units: `deg`, `rad`, `grad`, `turn` (with wrapping, e.g. `hsl(480 100% 50%)`)
 - ✅ **HWB**: `hwb(0 0% 0%)`, `hwb(0 0% 0% / 0.5)`
 - ✅ **Named Colors**: Full CSS named color set (including `rebeccapurple`) plus `transparent`
 
 ### CIE Color Spaces
 - ✅ **CIE LAB** (1976 L*a*b*): `lab(50 20 30)`, `lab(50% 20 30)`
 - ✅ **CIE LCH**: `lch(70 50 180)`, `lch(70% 50 180)`
-- ✅ **CIE XYZ** (1931): `color(xyz 0.5 0.5 0.5)`, `color(xyz-d65 0.5 0.5 0.5)`
+- ✅ **CIE XYZ** (1931): `color(xyz 0.5 0.5 0.5)`, `color(xyz-d65 0.5 0.5 0.5)`, `color(xyz-d50 0.5 0.5 0.5)` (with D50→D65 adaptation)
 
 ### Modern Perceptually Uniform Spaces
 - ✅ **OKLAB**: `oklab(0.6 0.1 -0.1)`

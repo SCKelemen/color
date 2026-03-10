@@ -120,3 +120,72 @@ func TestParseModernRGBSyntax(t *testing.T) {
 		})
 	}
 }
+
+func TestParseHueAngleUnitsAndWrapping(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		equivalent string
+	}{
+		{"HSL turn", "hsl(0.5turn 100% 50%)", "hsl(180deg 100% 50%)"},
+		{"HSL rad", "hsl(3.141592653589793rad 100% 50%)", "hsl(180deg 100% 50%)"},
+		{"HSL grad", "hsl(200grad 100% 50%)", "hsl(180deg 100% 50%)"},
+		{"HSL wrap positive", "hsl(480 100% 50%)", "hsl(120 100% 50%)"},
+		{"HSL wrap negative", "hsl(-120 100% 50%)", "hsl(240 100% 50%)"},
+		{"HSV turn", "hsv(0.5turn 100% 100%)", "hsv(180deg 100% 100%)"},
+		{"HWB turn", "hwb(0.5turn 0% 0%)", "hwb(180deg 0% 0%)"},
+		{"LCH turn", "lch(70 40 0.5turn)", "lch(70 40 180deg)"},
+		{"OKLCH turn", "oklch(0.7 0.2 0.5turn)", "oklch(0.7 0.2 180deg)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseColor(tt.input)
+			if err != nil {
+				t.Fatalf("ParseColor(%q) error = %v", tt.input, err)
+			}
+
+			want, err := ParseColor(tt.equivalent)
+			if err != nil {
+				t.Fatalf("ParseColor(%q) error = %v", tt.equivalent, err)
+			}
+
+			r1, g1, b1, a1 := got.RGBA()
+			r2, g2, b2, a2 := want.RGBA()
+			if !rgbaEqual(r1, g1, b1, a1, r2, g2, b2, a2) {
+				t.Fatalf(
+					"%q != %q: got (%f,%f,%f,%f), want (%f,%f,%f,%f)",
+					tt.input, tt.equivalent, r1, g1, b1, a1, r2, g2, b2, a2,
+				)
+			}
+		})
+	}
+}
+
+func TestParseXYZD50ChromaticAdaptation(t *testing.T) {
+	parsed, err := ParseColor("color(xyz-d50 0.4 0.3 0.2 / 0.8)")
+	if err != nil {
+		t.Fatalf("ParseColor failed: %v", err)
+	}
+
+	x, y, z := AdaptD50ToD65(0.4, 0.3, 0.2)
+	expected := NewXYZ(x, y, z, 0.8)
+
+	r1, g1, b1, a1 := parsed.RGBA()
+	r2, g2, b2, a2 := expected.RGBA()
+	if !rgbaEqual(r1, g1, b1, a1, r2, g2, b2, a2) {
+		t.Fatalf("xyz-d50 adaptation mismatch: got (%f,%f,%f,%f), want (%f,%f,%f,%f)",
+			r1, g1, b1, a1, r2, g2, b2, a2)
+	}
+
+	// Ensure xyz-d50 is not treated identically to xyz-d65 for same numeric triples.
+	d65, err := ParseColor("color(xyz-d65 0.4 0.3 0.2 / 0.8)")
+	if err != nil {
+		t.Fatalf("ParseColor failed: %v", err)
+	}
+
+	rd, gd, bd, _ := d65.RGBA()
+	if abs(r1-rd) < 0.000001 && abs(g1-gd) < 0.000001 && abs(b1-bd) < 0.000001 {
+		t.Fatalf("xyz-d50 should differ from xyz-d65 for same numeric values")
+	}
+}

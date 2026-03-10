@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SCKelemen/units"
 	"golang.org/x/image/colornames"
 )
 
@@ -221,6 +222,40 @@ func parseNumber(s string) (float64, error) {
 	return val, nil
 }
 
+// parseAngle parses a CSS angle value and returns degrees.
+// Supported units: deg, rad, turn, grad. Bare numbers are interpreted as degrees.
+func parseAngle(s string) (float64, error) {
+	token := strings.TrimSpace(strings.ToLower(s))
+	var (
+		v   float64
+		err error
+		a   units.Angle
+	)
+
+	switch {
+	case strings.HasSuffix(token, "deg"):
+		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "deg"), 64)
+		a = units.Deg(v)
+	case strings.HasSuffix(token, "grad"):
+		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "grad"), 64)
+		a = units.Grad(v)
+	case strings.HasSuffix(token, "rad"):
+		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "rad"), 64)
+		a = units.Rad(v)
+	case strings.HasSuffix(token, "turn"):
+		v, err = strconv.ParseFloat(strings.TrimSuffix(token, "turn"), 64)
+		a = units.Turns(v)
+	default:
+		v, err = strconv.ParseFloat(token, 64)
+		a = units.Deg(v)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+	return a.ToDeg().Raw(), nil
+}
+
 // parseRGB parses RGB/RGBA arguments.
 // Supports both legacy (comma-separated) and modern (space-separated) syntax.
 func parseRGB(args []string, hasAlpha bool) (Color, error) {
@@ -313,13 +348,9 @@ func parseHSL(args []string, hasAlpha bool) (Color, error) {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSL requires at least 3 arguments"}
 	}
 
-	h, err := parseNumber(args[0])
+	h, err := parseAngle(args[0])
 	if err != nil {
 		return nil, err
-	}
-	// Hue is in degrees, validate range 0-360
-	if h < 0 || h > 360 {
-		return nil, &ParseError{input: args[0], reason: "HSL hue out of range (0-360 degrees)"}
 	}
 
 	s, err := parseNumber(args[1])
@@ -364,7 +395,7 @@ func parseHSV(args []string, hasAlpha bool) (Color, error) {
 		return nil, &ParseError{input: strings.Join(args, ","), reason: "HSV requires at least 3 arguments"}
 	}
 
-	h, err := parseNumber(args[0])
+	h, err := parseAngle(args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +522,7 @@ func parseLCH(args []string) (Color, error) {
 		return nil, err
 	}
 
-	h, err := parseNumber(args[2])
+	h, err := parseAngle(args[2])
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +565,7 @@ func parseOKLCH(args []string) (Color, error) {
 		return nil, &ParseError{input: args[1], reason: "OKLCH chroma cannot be negative"}
 	}
 
-	h, err := parseNumber(args[2])
+	h, err := parseAngle(args[2])
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +590,7 @@ func parseHWB(args []string) (Color, error) {
 		return nil, &ParseError{input: strings.Join(args, " "), reason: "HWB requires at most 4 arguments"}
 	}
 
-	h, err := parseNumber(args[0])
+	h, err := parseAngle(args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -664,10 +695,20 @@ func parseColorFunction(args []string) (Color, error) {
 	colorSpace := strings.ToLower(strings.TrimSpace(args[0]))
 
 	// Handle CIE XYZ color spaces (xyz, xyz-d50, xyz-d65)
-	// Note: Currently all XYZ variants use D65 white point
-	if strings.HasPrefix(colorSpace, "xyz") {
-		// XYZ values (x, y, z) - CIE 1931 XYZ color space
+	switch colorSpace {
+	case "xyz", "xyz-d65":
 		return parseXYZ(args[1:])
+	case "xyz-d50":
+		c, err := parseXYZ(args[1:])
+		if err != nil {
+			return nil, err
+		}
+		xyz, ok := c.(*XYZ)
+		if !ok {
+			return nil, &ParseError{input: strings.Join(args, " "), reason: "internal XYZ parse failure"}
+		}
+		x, y, z := AdaptD50ToD65(xyz.X, xyz.Y, xyz.Z)
+		return NewXYZ(x, y, z, xyz.A), nil
 	}
 
 	// Handle RGB color spaces (srgb, display-p3, a98-rgb, etc.)

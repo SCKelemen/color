@@ -82,7 +82,7 @@ func TestParseColorHSLMalformed(t *testing.T) {
 		"hsl(180)",                     // Missing components
 		"hsl(180, 50%)",                // Missing component
 		"hsl(180, 50%, 50%, 50%, 50%)", // Too many components (>4)
-		"hsl(400, 50%, 50%)",           // Hue out of range
+		"hsl(180foo, 50%, 50%)",        // Invalid angle unit
 		"hsl(180, 150%, 50%)",          // Saturation out of range
 		"hsl(180, 50%, 150%)",          // Lightness out of range
 		"hsl(abc, 50%, 50%)",           // Non-numeric hue
