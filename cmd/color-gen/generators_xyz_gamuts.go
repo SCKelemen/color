@@ -174,11 +174,11 @@ func generateXYZGamutComparison(spaces []struct {
 	// Nord Aurora colors: Red, Orange, Yellow, Green, Purple
 	// These are already in sRGB space (RGB hex values), so we use them directly
 	gamutColors := map[string]color.RGBA{
-		"sRGB":         {191, 97, 106, 255},   // Nord Aurora Red (#BF616A) - sRGB
-		"DisplayP3":    {208, 135, 112, 255},  // Nord Aurora Orange (#D08770) - sRGB
-		"AdobeRGB":     {235, 203, 139, 255},  // Nord Aurora Yellow (#EBCB8B) - sRGB
-		"ProPhotoRGB":  {163, 190, 140, 255},  // Nord Aurora Green (#A3BE8C) - sRGB
-		"Rec2020":      {180, 142, 173, 255},  // Nord Aurora Purple (#B48EAD) - sRGB
+		"sRGB":        {191, 97, 106, 255},  // Nord Aurora Red (#BF616A) - sRGB
+		"DisplayP3":   {208, 135, 112, 255}, // Nord Aurora Orange (#D08770) - sRGB
+		"AdobeRGB":    {235, 203, 139, 255}, // Nord Aurora Yellow (#EBCB8B) - sRGB
+		"ProPhotoRGB": {163, 190, 140, 255}, // Nord Aurora Green (#A3BE8C) - sRGB
+		"Rec2020":     {180, 142, 173, 255}, // Nord Aurora Purple (#B48EAD) - sRGB
 	}
 
 	// Draw each gamut as a wireframe
@@ -355,15 +355,15 @@ func generateXYZGamutComparison(spaces []struct {
 		if i > 0 {
 			// Create a fixed-height spacer node
 			spacer := layout.Fixed(0, itemSpacing) // Zero width, fixed height
-			spacer.Style.MinHeight = itemSpacing
-			spacer.Style.Height = itemSpacing
+			spacer.Style.MinHeight = layout.Px(itemSpacing)
+			spacer.Style.Height = layout.Px(itemSpacing)
 			legendChildren = append(legendChildren, spacer)
 		}
 
 		// Create fixed-size item with explicit MinHeight
 		item := layout.Fixed(float64(squareSize+spacing+maxTextWidth), float64(itemHeight))
 		// Ensure MinHeight is set (Fixed should set Height, but set MinHeight too for safety)
-		item.Style.MinHeight = float64(itemHeight)
+		item.Style.MinHeight = layout.Px(float64(itemHeight))
 
 		legendChildren = append(legendChildren, item)
 	}
@@ -372,7 +372,7 @@ func generateXYZGamutComparison(spaces []struct {
 
 	// Layout the legend to get its actual size
 	legendConstraints := layout.Loose(float64(scaledWidth), float64(scaledHeight))
-	legendSize := layout.Layout(legendStack, legendConstraints)
+	legendSize := layout.LayoutSimple(legendStack, legendConstraints)
 
 	// Position legend in bottom left with proper margins
 	legendX := int(50 * float64(scale)) // Margin from left
@@ -383,7 +383,7 @@ func generateXYZGamutComparison(spaces []struct {
 	itemIndex := 0
 	for _, child := range legendChildren {
 		// Skip spacer nodes (they have width 0 and height equal to itemSpacing)
-		if child.Style.Width == 0 && child.Style.Height == itemSpacing {
+		if child.Style.Width.Value == 0 && child.Style.Height.Value == itemSpacing {
 			continue
 		}
 
